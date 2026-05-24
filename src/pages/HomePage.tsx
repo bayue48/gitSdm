@@ -32,8 +32,13 @@ export function HomePage() {
       <PreviewGraph />
       <Trending onSelect={setRepoUrl} />
       <FeatureShowcase />
-      <footer className="border-t border-white/5 py-8 text-center text-xs text-zinc-600">
-        gitSdm — visualize public GitHub repositories
+      <footer className="border-t border-white/5 py-10 text-center">
+        <p className="text-xs text-zinc-600">
+          <span className="font-semibold text-zinc-500">gitSdm</span> — AI-powered repository intelligence platform · Built for the Juara Vibe Coding challenge
+        </p>
+        <p className="mt-1 text-[10px] text-zinc-700">
+          Only public GitHub repositories are supported · Powered by Google Gemini
+        </p>
       </footer>
     </div>
   );

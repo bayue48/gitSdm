@@ -1,14 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Github } from 'lucide-react';
+import { ArrowRight, Github, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { GlowButton } from '@/components/ui/GlowButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { parseRepoFromUrl, LAST_REPO_KEY } from '@/lib/utils';
+
 interface RepoInputProps {
   initialUrl?: string;
 }
+
+const PRESETS = [
+  { label: '⚛️ React', repo: 'facebook/react', desc: 'UI library' },
+  { label: '▲ Next.js', repo: 'vercel/next.js', desc: 'React framework' },
+  { label: '🤖 Gemini CLI', repo: 'google-gemini/gemini-cli', desc: 'AI CLI' },
+  { label: '🐍 FastAPI', repo: 'tiangolo/fastapi', desc: 'Python API' },
+  { label: '🦜 LangChain', repo: 'langchain-ai/langchain', desc: 'LLM framework' },
+  { label: '✨ gitSdm', repo: 'bayue48/gitSdm', desc: 'This app' },
+];
 
 export function RepoInput({ initialUrl = '' }: RepoInputProps) {
   const [url, setUrl] = useState(initialUrl);
@@ -21,7 +31,7 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
     setError('');
     const parsed = parseRepoFromUrl(url);
     if (!parsed) {
-      setError('Enter a valid GitHub URL (e.g. facebook/react)');
+      setError('Enter a valid GitHub URL or owner/repo (e.g. facebook/react)');
       return;
     }
 
@@ -38,11 +48,16 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
     }
   };
 
+  const handlePreset = (repo: string) => {
+    setUrl(`https://github.com/${repo}`);
+    setError('');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
+      transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       id="analyze"
       className="mx-auto max-w-2xl scroll-mt-20 px-4"
     >
@@ -53,39 +68,45 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://github.com/owner/repo"
+              placeholder="https://github.com/owner/repo  or  owner/repo"
               className="pl-10"
               disabled={loading}
             />
           </div>
           <GlowButton type="submit" loading={loading} className="sm:shrink-0">
-            Visualize
+            <Zap className="h-4 w-4" />
+            Analyze
             <ArrowRight className="h-4 w-4" />
           </GlowButton>
         </form>
-        {error && <p className="mt-2 px-2 text-sm text-red-400">{error}</p>}
 
-        <div className="mt-4 border-t border-white/5 pt-3 flex flex-wrap items-center gap-2 px-2">
-          <span className="text-xs text-zinc-500 font-medium">Try templates:</span>
-          {[
-            { label: 'React', repo: 'facebook/react' },
-            { label: 'Gemini CLI', repo: 'google-gemini/gemini-cli' },
-            { label: 'PIA Scrap', repo: 'bayue48/pia-scrap' },
-            { label: 'keking', repo: 'bayue48/keking' },
-            { label: 'GitSdm (This)', repo: 'bayue48/gitSdm' },
-          ].map((item) => (
-            <button
-              key={item.repo}
-              type="button"
-              onClick={() => {
-                setUrl(`https://github.com/${item.repo}`);
-                setError('');
-              }}
-              className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-1 text-xs text-zinc-400 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-300 hover:scale-[1.03] transition-all font-mono"
-            >
-              {item.label}
-            </button>
-          ))}
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 px-2 text-sm text-red-400"
+          >
+            {error}
+          </motion.p>
+        )}
+
+        {/* Preset pills */}
+        <div className="mt-3 border-t border-white/5 pt-3 px-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="repo-preset-try text-[10px] font-semibold uppercase tracking-wider mr-1">TRY:</span>
+            {PRESETS.map((item) => (
+              <button
+                key={item.repo}
+                type="button"
+                onClick={() => handlePreset(item.repo)}
+                title={item.repo}
+                className="repo-preset-pill group flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all duration-150 font-medium"
+              >
+                <span className="repo-preset-label">{item.label}</span>
+                <span className="repo-preset-desc text-[9px] font-mono transition-colors">{item.desc}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </GlassCard>
     </motion.div>

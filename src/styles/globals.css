@@ -130,15 +130,124 @@ body {
   border: 1px solid rgba(var(--white-rgb), 0.06);
 }
 
-/* Hero badge adjustments for light theme */
+/* Hero badge — base = dark theme */
 .hero-badge {
+  background: rgba(109, 40, 217, 0.12);
+  border-color: rgba(139, 92, 246, 0.25);
+  color: #c4b5fd;
+  /* violet-300 */
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
+
+/* Hero badge — light theme */
 .light .hero-badge {
-  background: rgba(109,40,217,0.06); /* slightly stronger violet */
-  border-color: rgba(109,40,217,0.12);
-  color: #6d28d9; /* accent-from dark */
+  background: rgba(109, 40, 217, 0.07);
+  border-color: rgba(109, 40, 217, 0.18);
+  color: #6d28d9;
+  /* violet-700 */
 }
+
+/* Repo preset pills — base = dark theme */
+.repo-preset-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: #a1a1aa;
+  /* zinc-400 */
+}
+
+.repo-preset-pill:hover {
+  background: rgba(109, 40, 217, 0.10);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+  /* violet-300 */
+}
+
+/* Repo preset pills — light theme */
+.light .repo-preset-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.10);
+  color: #52525b;
+  /* zinc-600 */
+}
+
+.light .repo-preset-pill:hover {
+  background: rgba(109, 40, 217, 0.07);
+  border-color: rgba(109, 40, 217, 0.25);
+  color: #6d28d9;
+  /* violet-700 */
+}
+
+
+/* Floating hero node pills — base = dark theme */
+.hero-node {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.hero-node-violet {
+  background: rgba(109, 40, 217, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+  /* violet-300 */
+}
+
+.hero-node-cyan {
+  background: rgba(8, 145, 178, 0.12);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: #67e8f9;
+  /* cyan-300 */
+}
+
+.hero-node-emerald {
+  background: rgba(5, 150, 105, 0.12);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #6ee7b7;
+  /* emerald-300 */
+}
+
+.hero-node-amber {
+  background: rgba(180, 83, 9, 0.12);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+  /* amber-300 */
+}
+
+/* Floating hero node pills — light theme overrides */
+.light .hero-node {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.light .hero-node-violet {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(109, 40, 217, 0.35);
+  color: #6d28d9;
+  /* violet-700 */
+}
+
+.light .hero-node-cyan {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(8, 145, 178, 0.35);
+  color: #0e7490;
+  /* cyan-700 */
+}
+
+.light .hero-node-emerald {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(5, 150, 105, 0.35);
+  color: #047857;
+  /* emerald-700 */
+}
+
+.light .hero-node-amber {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(180, 83, 9, 0.35);
+  color: #b45309;
+  /* amber-700 */
+}
+
 
 /* Make the badge icon inherit the badge text color in all themes */
 .hero-badge svg {
@@ -152,6 +261,7 @@ body {
   stroke: currentColor;
   fill: none;
 }
+
 .light .feature-icon svg {
   color: currentColor;
   stroke: black;
@@ -166,18 +276,21 @@ body {
   background-clip: padding-box;
   overflow: hidden;
 }
+
 .light .glow-btn {
-  box-shadow: 0 8px 24px rgba(99,102,241,0.12), 0 2px 6px rgba(7,89,133,0.06);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12), 0 2px 6px rgba(7, 89, 133, 0.06);
 
 }
+
 .light .glow-btn:hover {
-  box-shadow: 0 10px 30px rgba(99,102,241,0.16), 0 4px 10px rgba(7,89,133,0.08);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.16), 0 4px 10px rgba(7, 89, 133, 0.08);
 }
 
 /* Make sure icons inside gradient buttons are visible */
 .glow-btn svg {
   color: rgba(var(--white-rgb), 1);
 }
+
 .light .glow-btn svg {
   color: rgba(var(--black-rgb), 1);
 }
@@ -229,12 +342,10 @@ svg {
 }
 
 .shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0) 100%);
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
@@ -436,44 +547,53 @@ svg {
 .light .code-inspector-scroll .hljs {
   color: #24292e;
 }
+
 .light .hljs-keyword,
 .light .hljs-selector-tag,
 .light .hljs-built_in,
 .light .hljs-name {
   color: #d73a49;
 }
+
 .light .hljs-string,
 .light .hljs-symbol,
 .light .hljs-bullet {
   color: #032f62;
 }
+
 .light .hljs-title,
 .light .hljs-section,
 .light .hljs-type,
 .light .hljs-class .hljs-title {
   color: #6f42c1;
 }
+
 .light .hljs-function .hljs-title,
 .light .hljs-title.function_ {
   color: #6f42c1;
 }
+
 .light .hljs-number,
 .light .hljs-literal {
   color: #005cc5;
 }
+
 .light .hljs-comment,
 .light .hljs-quote {
   color: #6a737d;
 }
+
 .light .hljs-variable,
 .light .hljs-template-variable,
 .light .hljs-attr {
   color: #e36209;
 }
+
 .light .hljs-params,
 .light .hljs-attribute {
   color: #24292e;
 }
+
 .light .hljs-punctuation {
   color: #24292e;
 }

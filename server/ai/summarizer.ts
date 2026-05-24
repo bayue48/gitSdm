@@ -77,11 +77,18 @@ export async function explainRepo(params: {
   }
   if (params.context) userPrompt += `\n\nAdditional context: ${params.context}`;
 
+  const scopeInstruction =
+    params.scope === 'node' && params.nodeId
+      ? `Focus specifically on the graph node/module "${params.nodeId}". Explain: (1) what this module does, (2) its role in the overall architecture, (3) what calls into it and what it calls, (4) any notable implementation patterns or concerns.`
+      : params.scope === 'file' && params.filePath
+      ? `Focus specifically on the file "${params.filePath}". Explain: (1) the file's purpose and responsibility, (2) its key functions/classes/exports, (3) how it fits into the overall data flow, (4) any notable patterns, gotchas, or design decisions.`
+      : `Provide a comprehensive repository overview covering: (1) What this project actually does and who it's for — be specific, not generic. (2) The architectural style (e.g. monorepo, microservices, layered MVC, etc) and why it makes sense for this project. (3) The main execution flow — trace a typical user request from entry point through all key layers. (4) The most important modules/directories and their exact roles. (5) Notable technical choices (framework picks, state management, build tooling) and what they reveal about the project's priorities.`;
+
   const explanation = await provider.complete([
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'user',
-      content: `Explain this repository for a developer onboarding. Scope: ${params.scope}.\n\n${userPrompt}`,
+      content: `${scopeInstruction}\n\n${userPrompt}`,
     },
   ]);
 
@@ -119,7 +126,17 @@ export async function explainArchitecture(
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `Provide an architecture overview as JSON: { "overview": string, "layers": [{ "name": string, "description": string }] }\n\n${buildRepoContext(analysis)}`,
+        content: `Analyze this repository's system architecture deeply and return JSON with this exact shape:
+{
+  "overview": "A 2-3 sentence technical description of the architectural style, main design decisions, and how components interact. Be specific — mention real file names and modules.",
+  "layers": [
+    { "name": "Layer Name", "description": "Precise description of what this layer does, which files/directories implement it, and how it connects to adjacent layers." }
+  ]
+}
+
+Identify 4-7 distinct architectural layers (e.g. Presentation/UI, API/Router, Services/Business Logic, Data/GitHub API, AI/ML Layer, Cache, Utilities). Each layer description must reference real files from the context. Do NOT produce generic descriptions.
+
+${buildRepoContext(analysis)}`,
       },
     ],
     { json: true },
@@ -171,7 +188,18 @@ export async function suggestFiles(
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `Suggest important files to read first. Return JSON: { "files": [{ "path": string, "reason": string, "priority": "high"|"medium"|"low" }] }. Only use paths from context.\n\n${buildRepoContext(analysis)}`,
+        content: `You are helping a new developer understand this repository. Identify the 8-10 most important files to read, in the order that builds understanding most efficiently.
+
+For each file, provide:
+- path: exact file path from context (must exist in the file list)
+- reason: a specific, technical explanation of WHY this file matters and what the developer will learn from it
+- priority: "high" (read first), "medium" (read second), "low" (reference material)
+
+Return JSON: { "files": [{ "path": string, "reason": string, "priority": "high"|"medium"|"low" }] }
+
+Prioritize: entry points, core routers/controllers, main business logic, key data models. Avoid test files unless they reveal important patterns.
+
+${buildRepoContext(analysis)}`,
       },
     ],
     { json: true },
@@ -222,7 +250,25 @@ export async function generateOnboarding(
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `Create a 5-step onboarding walkthrough. Return JSON: { "steps": [{ "title": string, "description": string, "filePath"?: string }] }\n\n${buildRepoContext(analysis)}`,
+        content: `Create a 6-step onboarding walkthrough for a developer joining this project for the first time.
+
+Each step should:
+- Build logically on the previous step (start with the big picture, drill down progressively)
+- Reference REAL, SPECIFIC files from the context
+- Explain not just WHAT the file does, but HOW it fits into the execution flow
+- Be written for a competent developer who needs context, not a beginner who needs hand-holding
+
+Steps should follow this progression:
+1. Project purpose & mental model (high level)
+2. Entry point & startup sequence (where does execution begin?)
+3. Core routing / request lifecycle
+4. Main business logic / key service layer
+5. State management / data layer
+6. Configuration, testing, or deployment setup
+
+Return JSON: { "steps": [{ "title": string, "description": string, "filePath"?: string }] }
+
+${buildRepoContext(analysis)}`,
       },
     ],
     { json: true },
@@ -268,11 +314,23 @@ export async function explainRepoELI5(
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'user',
-      content: `Explain this repository like I am completely new to it (ELI5). Focus on:
-1. The general project flow and how systems interact.
-2. What files/folders matter most and why.
-3. The execution pipeline in simple, conversational terms.
-Never invent files or dependencies. Keep it encouraging and clear.
+      content: `Explain this repository to a developer who is smart but completely unfamiliar with this specific codebase.
+
+Use a friendly, conversational tone — like a senior engineer giving a 5-minute tour before a pairing session. Structure your explanation as:
+
+## What This Is
+One clear, specific sentence about what the project does and who uses it.
+
+## The Big Picture
+How does it work end-to-end? Walk through the happy path from user action to result. Name real files and directories.
+
+## Key Areas to Know
+List 3-5 directories or files that are most important to understand, with a one-liner on what each does.
+
+## Where to Start
+If I had to read just 2-3 files to understand this codebase, which ones and why?
+
+Keep it concrete. Every claim should reference real files from the context. Never be vague.
 
 ${buildRepoContext(analysis)}`,
     },
@@ -331,8 +389,17 @@ export async function generateRefactorSuggestions(
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'user',
-      content: `Analyze this codebase and suggest refactoring improvements. Focus on architectural bottlenecks, duplicated logic, tight coupling, naming inconsistencies, and risky areas.
-Return JSON: { "suggestions": [{ "title": string, "description": string, "category": string, "files": string[], "risk": "high"|"medium"|"low" }] }. Only reference real files from the context.
+      content: `You are a principal engineer doing a code review of this repository. Identify the top 4-6 most impactful refactoring opportunities.
+
+For each suggestion:
+- Focus on REAL architectural issues visible from the file structure and dependencies
+- Be specific: name exact files, explain the exact problem, and describe the concrete improvement
+- Assign risk based on scope of change (high = touches many files/core paths, low = isolated)
+- Categories: Architecture | Performance | DRY/Duplication | Coupling | Naming | Testing | Security | Scalability
+
+Return JSON: { "suggestions": [{ "title": string, "description": string, "category": string, "files": string[], "risk": "high"|"medium"|"low" }] }
+
+Only reference file paths that actually appear in the provided context. Do not invent files.
 
 ${buildRepoContext(analysis)}`,
     },
@@ -400,7 +467,18 @@ export async function generateHealthReport(
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'user',
-      content: `Analyze codebase health and generate scores (0 to 100) and a summary.
+      content: `Perform a rigorous codebase health assessment. Score each dimension from 0-100 based on evidence from the actual file structure and dependencies:
+
+- maintainability: How easy is it to change this codebase? (Consider: module size, separation of concerns, config clarity)
+- modularity: How well-decomposed is the code? (Consider: directory structure, file count per concern, coupling indicators)
+- readability: How easy is it to understand? (Consider: naming conventions, file organization, documentation presence)
+- architecture: How sound is the overall design? (Consider: layer separation, entry points clarity, dependency direction)
+- complexity: Inverse complexity — higher score means LESS complexity (Consider: file count, nesting depth, dependency count)
+
+Be realistic and specific. A score of 85+ should only be given for genuinely exceptional quality. A typical mid-size project should score 60-80.
+
+The summary (2-3 sentences) must reference specific observed strengths and weaknesses from the actual codebase.
+
 Return JSON: { "scores": { "maintainability": number, "modularity": number, "readability": number, "architecture": number, "complexity": number }, "summary": string }
 
 ${buildRepoContext(analysis)}`,
@@ -486,7 +564,20 @@ export async function generateRepoRoast(
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'user',
-      content: `Write a funny, sarcastic, lighthearted developer "roast" of this repository. Be witty and joke about its structure, dependencies, files, or naming conventions. Maintain a humorous, friendly hackathon vibe. Keep it to a few paragraphs.
+      content: `You are a witty, sarcastic senior developer who has been asked to "roast" this codebase at a hackathon demo day. Think: Silicon Valley meets a comedy roast.
+
+Rules:
+- Be specific: joke about REAL files, REAL dependencies, and REAL structural decisions from the context
+- Be funny, not mean. The goal is the audience laughs AND nods in recognition
+- Reference at least 3 specific things from the codebase (file names, package choices, directory structure)
+- Include at least one backhanded compliment ("The only good thing about...")
+- End with an encouraging punchline
+- Keep it to 3-4 punchy paragraphs. Quality over quantity.
+
+Examples of good roast lines:
+- "Your nested callbacks have callbacks. It's turtles all the way down, except the turtles are promises that were never awaited."
+- "I see you've committed your .env file to git. Bold move. Very bold."
+- "The README says 'simple setup' but the setup guide is 847 lines long."
 
 ${buildRepoContext(analysis)}`,
     },
