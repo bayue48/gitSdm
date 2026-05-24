@@ -70,8 +70,8 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
           {[
             { label: 'React', repo: 'facebook/react' },
             { label: 'FastAPI', repo: 'fastapi/fastapi' },
-            { label: 'Antigravity CLI', repo: 'google-antigravity/antigravity-cli' },
             { label: 'PIA Scrap', repo: 'bayue48/pia-scrap' },
+            { label: 'keking', repo: 'bayue48/keking' },
             { label: 'GitSdm (This)', repo: 'bayue48/gitSdm' },
           ].map((item) => (
             <button

@@ -229,6 +229,21 @@ function getEdgeStyle(
   nodes: Node[],
   theme: 'dark' | 'light',
 ): React.CSSProperties {
+  const targetNode = nodes.find((n) => n.id === edge.target);
+  const sourceNode = nodes.find((n) => n.id === edge.source);
+
+  const isTargetDeleted = targetNode?.data?.diffStatus === 'deleted';
+  const isSourceDeleted = sourceNode?.data?.diffStatus === 'deleted';
+  const isDeleted = isTargetDeleted || isSourceDeleted;
+
+  if (isDeleted) {
+    return {
+      stroke: theme === 'dark' ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.25)',
+      strokeWidth: 1.2,
+      strokeDasharray: '3,3',
+    };
+  }
+
   const defaultStyle = {
     stroke: theme === 'dark' ? 'rgba(255, 255, 255, 0.24)' : 'rgba(0, 0, 0, 0.15)',
     strokeWidth: theme === 'dark' ? 1.35 : 1.2,
@@ -236,13 +251,27 @@ function getEdgeStyle(
   };
 
   if (!selectedId) {
+    const isAdded = targetNode?.data?.diffStatus === 'added' || sourceNode?.data?.diffStatus === 'added';
+    const isModified = targetNode?.data?.diffStatus === 'modified' || sourceNode?.data?.diffStatus === 'modified';
+
+    if (isAdded) {
+      return {
+        stroke: theme === 'dark' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.25)',
+        strokeWidth: 1.35,
+      };
+    }
+    if (isModified) {
+      return {
+        stroke: theme === 'dark' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.25)',
+        strokeWidth: 1.35,
+      };
+    }
     return defaultStyle;
   }
 
   const isConnected = edge.source === selectedId || edge.target === selectedId;
 
   if (isConnected) {
-    const targetNode = nodes.find((n) => n.id === edge.target);
     const color = (targetNode?.data?.nodeColor as string) ?? '#fbbf24';
     return {
       stroke: color,

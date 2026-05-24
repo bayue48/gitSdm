@@ -30,19 +30,30 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export async function analyzeRepo(url: string): Promise<RepoAnalysis> {
+export async function analyzeRepo(url: string, branch?: string): Promise<RepoAnalysis> {
   return request<RepoAnalysis>('/api/repo/analyze', {
     method: 'POST',
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, branch }),
   });
+}
+
+export async function fetchRepoBranches(
+  owner: string,
+  repo: string,
+): Promise<{ name: string; protected: boolean }[]> {
+  const params = new URLSearchParams({ owner, repo });
+  return request<{ name: string; protected: boolean }[]>(`/api/repo/branches?${params}`);
 }
 
 export async function fetchRepoFile(
   owner: string,
   repo: string,
   path: string,
+  branch?: string,
 ): Promise<{ path: string; content: string; sha: string }> {
-  const params = new URLSearchParams({ owner, repo, path });
+  const queryObj: Record<string, string> = { owner, repo, path };
+  if (branch) queryObj.branch = branch;
+  const params = new URLSearchParams(queryObj);
   return request<{ path: string; content: string; sha: string }>(
     `/api/repo/file?${params}`,
   );
@@ -53,7 +64,7 @@ export async function fetchTrending(): Promise<TrendingRepo[]> {
   return data.repos;
 }
 
-export async function aiExplain(body: AIExplainRequest): Promise<AIExplainResponse> {
+export async function aiExplain(body: AIExplainRequest & { branch?: string }): Promise<AIExplainResponse> {
   return request<AIExplainResponse>('/api/ai/explain', {
     method: 'POST',
     body: JSON.stringify(body),
@@ -63,89 +74,98 @@ export async function aiExplain(body: AIExplainRequest): Promise<AIExplainRespon
 export async function aiArchitecture(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIArchitectureResponse> {
   return request<AIArchitectureResponse>('/api/ai/architecture', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiSuggestFiles(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AISuggestFilesResponse> {
   return request<AISuggestFilesResponse>('/api/ai/suggest-files', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiOnboarding(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIOnboardingResponse> {
   return request<AIOnboardingResponse>('/api/ai/onboarding', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiExplainNew(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIExplainNewResponse> {
   return request<AIExplainNewResponse>('/api/ai/explain-new', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiRefactor(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIRefactorResponse> {
   return request<AIRefactorResponse>('/api/ai/refactor', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiHealth(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIHealthResponse> {
   return request<AIHealthResponse>('/api/ai/health', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiMermaid(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIMermaidResponse> {
   return request<AIMermaidResponse>('/api/ai/mermaid', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiRoast(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIRoastResponse> {
   return request<AIRoastResponse>('/api/ai/roast', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }
 
 export async function aiReadmeEnhance(
   owner: string,
   repo: string,
+  branch?: string,
 ): Promise<AIReadmeEnhanceResponse> {
   return request<AIReadmeEnhanceResponse>('/api/ai/readme-enhance', {
     method: 'POST',
-    body: JSON.stringify({ owner, repo }),
+    body: JSON.stringify({ owner, repo, branch }),
   });
 }

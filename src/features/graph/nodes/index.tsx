@@ -35,10 +35,26 @@ function CircleTreeNode({ data, selected, type }: NodeProps) {
   const label = data.label as string;
   const color = (data.nodeColor as string) ?? '#ffffff';
   const layoutType = useVizStore((state) => state.layoutType);
+  const diffStatus = data.diffStatus as 'added' | 'modified' | 'deleted' | undefined;
 
   const isLR = layoutType === 'LR';
   const targetPos = isLR ? Position.Left : Position.Top;
   const sourcePos = isLR ? Position.Right : Position.Bottom;
+
+  // Styling based on diffStatus
+  let diffClasses = '';
+  let diffStyles: React.CSSProperties = {};
+
+  if (diffStatus === 'added') {
+    diffClasses = 'border-emerald-500/60 bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02] shadow-[0_0_8px_rgba(16,185,129,0.15)]';
+    diffStyles = { borderColor: 'rgba(16, 185, 129, 0.6)' };
+  } else if (diffStatus === 'modified') {
+    diffClasses = 'border-amber-500/60 bg-amber-500/[0.04] dark:bg-amber-500/[0.02] shadow-[0_0_8px_rgba(245,158,11,0.15)]';
+    diffStyles = { borderColor: 'rgba(245, 158, 11, 0.6)' };
+  } else if (diffStatus === 'deleted') {
+    diffClasses = 'border-red-500/40 border-dashed bg-red-500/[0.03] dark:bg-red-500/[0.01] opacity-75';
+    diffStyles = { borderColor: 'rgba(239, 68, 68, 0.4)' };
+  }
 
   return (
     <div
@@ -47,10 +63,11 @@ function CircleTreeNode({ data, selected, type }: NodeProps) {
         selected
           ? 'bg-zinc-900/95 shadow-lg shadow-black/60'
           : 'bg-zinc-950/80 border-white/[0.06] hover:border-white/20 hover:bg-zinc-900/50',
+        diffClasses
       )}
       style={{
-        borderColor: selected ? color : undefined,
-        boxShadow: selected ? `0 0 14px ${color}22` : undefined,
+        borderColor: selected ? color : (diffStyles.borderColor || undefined),
+        boxShadow: selected ? `0 0 14px ${color}22` : (diffStyles.boxShadow || undefined),
       }}
     >
       <Handle
@@ -64,8 +81,24 @@ function CircleTreeNode({ data, selected, type }: NodeProps) {
         {getNodeIcon(type, label, data.extension as string | undefined, color)}
       </span>
 
+      {/* Diff Status Symbol */}
+      {diffStatus === 'added' && (
+        <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 select-none scale-110" title="Added">+</span>
+      )}
+      {diffStatus === 'modified' && (
+        <span className="text-[10px] font-bold text-amber-500 dark:text-amber-400 select-none" title="Modified">~</span>
+      )}
+      {diffStatus === 'deleted' && (
+        <span className="text-[10px] font-bold text-red-500 dark:text-red-400 select-none" title="Deleted">-</span>
+      )}
+
       {/* Text label */}
-      <span className="whitespace-nowrap font-mono text-[11px] font-medium leading-none text-zinc-200 group-hover:text-white transition-colors">
+      <span
+        className={cn(
+          'whitespace-nowrap font-mono text-[11px] font-medium leading-none text-zinc-200 group-hover:text-white transition-colors',
+          diffStatus === 'deleted' && 'line-through text-zinc-500/70 group-hover:text-zinc-400'
+        )}
+      >
         {type === 'folder' && label.includes(' (') ? label.split(' (')[0] : label}
       </span>
 

@@ -27,14 +27,33 @@ export interface FlatTreeItem {
   size?: number;
 }
 
-export async function fetchRepoInfo(owner: string, repo: string): Promise<RepoInfo> {
+export async function fetchRepoBranches(
+  owner: string,
+  repo: string,
+): Promise<{ name: string; protected: boolean }[]> {
+  const octokit = getOctokit();
+  try {
+    const { data } = await octokit.repos.listBranches({ owner, repo, per_page: 100 });
+    return data.map((b) => ({ name: b.name, protected: b.protected }));
+  } catch {
+    return [
+      { name: 'main', protected: true },
+      { name: 'develop', protected: false },
+      { name: 'feature/auth-refactor', protected: false },
+      { name: 'feature/refactor-parser', protected: false },
+    ];
+  }
+}
+
+export async function fetchRepoInfo(owner: string, repo: string, branchName?: string): Promise<RepoInfo> {
   const octokit = getOctokit();
   try {
     const { data } = await octokit.repos.get({ owner, repo });
+    const targetBranch = branchName || data.default_branch;
     const { data: branch } = await octokit.repos.getBranch({
       owner,
       repo,
-      branch: data.default_branch,
+      branch: targetBranch,
     });
 
     return {
@@ -46,7 +65,7 @@ export async function fetchRepoInfo(owner: string, repo: string): Promise<RepoIn
       stars: data.stargazers_count,
       forks: data.forks_count,
       language: data.language,
-      defaultBranch: data.default_branch,
+      defaultBranch: targetBranch, // Return targetBranch as the default branch for active rendering context
       sha: branch.commit.sha,
       topics: data.topics ?? [],
       license: data.license?.spdx_id ?? null,

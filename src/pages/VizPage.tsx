@@ -16,12 +16,25 @@ import { FileTypeLegend } from '@/components/viz/FileTypeLegend';
 import { VizError } from '@/components/viz/VizError';
 import { Check } from 'lucide-react';
 import { StagedLoader } from '@/components/viz/StagedLoader';
-import type { GraphNode } from '@/types';
+import type { GraphNode, TreeNode } from '@/types';
 import { useExplain } from '@/features/ai/useAI';
+import { CompareHUD } from '@/components/viz/CompareHUD';
 
 export function VizPage() {
   const { owner = '', repo = '' } = useParams();
-  const { data, isLoading, error } = useAnalyzeRepo(owner, repo);
+  const { selectedBranch, compareBranch } = useVizStore();
+
+  // Fetch selected/active branch analysis
+  const { data, isLoading, error } = useAnalyzeRepo(owner, repo, selectedBranch);
+
+  // Fetch comparison branch analysis
+  const { data: compareData } = useAnalyzeRepo(
+    owner,
+    repo,
+    compareBranch,
+    !!compareBranch
+  );
+
   const {
     reset,
     selectedNodeId,
@@ -92,10 +105,117 @@ export function VizPage() {
         repo: data.meta.repo,
         scope: 'node',
         nodeId: selectedNodeId,
+        branch: selectedBranch || undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNodeId, data?.meta.owner, data?.meta.repo]);
+  }, [selectedNodeId, data?.meta.owner, data?.meta.repo, selectedBranch]);
+
+  // Recursively map file paths to their tree node SHA
+  const fileShaMaps = useMemo(() => {
+    if (!data) return { selected: new Map<string, string>(), compare: new Map<string, string>() };
+
+    const buildShaMap = (nodes: TreeNode[], map = new Map<string, string>()) => {
+      for (const node of nodes) {
+        if (node.type === 'file' && node.sha) {
+          map.set(node.path, node.sha);
+        } else if (node.children) {
+          buildShaMap(node.children, map);
+        }
+      }
+      return map;
+    };
+
+    const selected = buildShaMap(data.tree);
+    const compare = compareData ? buildShaMap(compareData.tree) : new Map<string, string>();
+    return { selected, compare };
+  }, [data, compareData]);
+
+  // Compute graph diff status
+  const graphDiff = useMemo(() => {
+    if (!compareBranch || !data || !compareData) return null;
+
+    const { selected: selectedMap, compare: compareMap } = fileShaMaps;
+    const added = new Set<string>();
+    const modified = new Set<string>();
+    const deleted = new Set<string>();
+
+    // 1. Files in selected but not compare
+    for (const [path, sha] of selectedMap.entries()) {
+      if (!compareMap.has(path)) {
+        added.add(path);
+      } else if (compareMap.get(path) !== sha) {
+        modified.add(path);
+      }
+    }
+
+    // 2. Files in compare but not selected
+    for (const path of compareMap.keys()) {
+      if (!selectedMap.has(path)) {
+        deleted.add(path);
+      }
+    }
+
+    return { added, modified, deleted };
+  }, [compareBranch, data, compareData, fileShaMaps]);
+
+  // Build the combined graph showing added, modified, and deleted elements
+  const combinedGraph = useMemo(() => {
+    if (!data) return null;
+    if (!compareBranch || !compareData || !graphDiff) return data.graph;
+
+    const nodesMap = new Map(data.graph.nodes.map((n) => [n.id, { ...n, data: { ...n.data } }]));
+
+    // Annotate current nodes with diff statuses
+    for (const [id, node] of nodesMap.entries()) {
+      const path = node.data.path;
+      if (graphDiff.added.has(id) || (path && graphDiff.added.has(path))) {
+        node.data.diffStatus = 'added';
+      } else if (graphDiff.modified.has(id) || (path && graphDiff.modified.has(path))) {
+        node.data.diffStatus = 'modified';
+      }
+    }
+
+    // Find deleted nodes from compareData
+    const deletedNodes: GraphNode[] = [];
+    for (const node of compareData.graph.nodes) {
+      if (!nodesMap.has(node.id)) {
+        const path = node.data.path;
+        const isFileDeleted = node.type === 'file' && path && graphDiff.deleted.has(path);
+        const isFolderDeleted = node.type === 'folder' && node.id && !data.graph.nodes.some((n) => n.id === node.id);
+
+        if (isFileDeleted || isFolderDeleted) {
+          deletedNodes.push({
+            ...node,
+            data: {
+              ...node.data,
+              diffStatus: 'deleted',
+            },
+          });
+        }
+      }
+    }
+
+    // Combine edges
+    const edgesMap = new Map(data.graph.edges.map((e) => [e.id, { ...e }]));
+    const currentNodesKeys = new Set(nodesMap.keys());
+    const deletedNodesKeys = new Set(deletedNodes.map((n) => n.id));
+    const allKeys = new Set([...currentNodesKeys, ...deletedNodesKeys]);
+
+    for (const edge of compareData.graph.edges) {
+      if (allKeys.has(edge.source) && allKeys.has(edge.target)) {
+        if (!edgesMap.has(edge.id)) {
+          edgesMap.set(edge.id, { ...edge });
+        }
+      }
+    }
+
+    return {
+      nodes: [...Array.from(nodesMap.values()), ...deletedNodes],
+      edges: Array.from(edgesMap.values()),
+      layout: data.graph.layout,
+    };
+  }, [data, compareBranch, compareData, graphDiff]);
 
   if (error) {
     return <VizError message={error instanceof Error ? error.message : 'Unknown error'} />;
@@ -135,9 +255,10 @@ export function VizPage() {
             >
               <ReactFlowProvider>
                 <GraphFocusSync />
-                <GraphCanvas graph={data.graph} />
+                <GraphCanvas graph={combinedGraph || data.graph} />
               </ReactFlowProvider>
               <FileTypeLegend graph={data.graph} />
+              <CompareHUD diff={graphDiff} defaultBranch={data.meta.defaultBranch} />
               {data.treeTruncated && (
                 <div className="absolute left-3 top-2 z-10 rounded-lg bg-amber-500/10 px-2 py-1 text-[10px] text-amber-300 ring-1 ring-amber-500/20">
                   Tree truncated

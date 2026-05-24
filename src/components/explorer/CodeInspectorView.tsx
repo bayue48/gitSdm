@@ -4,6 +4,8 @@ import { fetchRepoFile } from '@/lib/api-client';
 import { HighlightedCode, CodePlaceholder } from '@/lib/syntax-highlight';
 import { Skeleton } from '@/components/ui/Skeleton';
 
+import { useVizStore } from '@/stores/viz-store';
+
 interface CodeInspectorViewProps {
   owner: string;
   repo: string;
@@ -12,9 +14,10 @@ interface CodeInspectorViewProps {
 }
 
 export function CodeInspectorView({ owner, repo, filePath, onClose }: CodeInspectorViewProps) {
+  const selectedBranch = useVizStore((s) => s.selectedBranch);
   const { data, isLoading, error } = useQuery({
-    queryKey: ['file', owner, repo, filePath],
-    queryFn: () => fetchRepoFile(owner, repo, filePath!),
+    queryKey: ['file', owner, repo, filePath, selectedBranch],
+    queryFn: () => fetchRepoFile(owner, repo, filePath!, selectedBranch || undefined),
     enabled: !!filePath,
     staleTime: 1000 * 60 * 10,
   });

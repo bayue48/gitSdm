@@ -88,7 +88,7 @@ export function Hero() {
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-1.5 text-xs text-violet-300 hero-badge"
         >
           <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-          <span>JuaraVibeCoding Edition — AI-powered codebase intelligence</span>
+          <span>AI-powered codebase intelligence</span>
         </motion.div>
 
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-white leading-[1.15]">

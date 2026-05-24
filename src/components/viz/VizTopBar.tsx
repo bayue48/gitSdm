@@ -4,6 +4,7 @@ import type { RepoMeta } from '@/types';
 import { formatStars } from '@/lib/utils';
 import { useState } from 'react';
 import { useVizStore } from '@/stores/viz-store';
+import { BranchSelector } from './BranchSelector';
 
 interface VizTopBarProps {
   meta?: RepoMeta;
@@ -27,7 +28,7 @@ export function VizTopBar({ meta }: VizTopBarProps) {
   };
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-4 border-b border-white/5 bg-zinc-950/80 px-4 backdrop-blur-xl">
+    <header className="relative z-50 flex h-12 shrink-0 items-center gap-4 border-b border-white/5 bg-zinc-950/80 px-4 backdrop-blur-xl">
       <Link to="/" className="flex items-center gap-2 text-white">
         <div className="logo-bg flex h-7 w-7 items-center justify-center rounded-md">
           <GitBranch className="h-3.5 w-3.5" />
@@ -54,7 +55,9 @@ export function VizTopBar({ meta }: VizTopBarProps) {
             >
               {repoName}
             </a>
-            <span className="ml-2 text-xs text-zinc-500">★ {formatStars(meta.stars)}</span>
+            <span className="mx-2.5 text-zinc-800 dark:text-zinc-700 select-none">|</span>
+            <BranchSelector owner={owner} repo={repoName} defaultBranch={meta.defaultBranch} />
+            <span className="ml-2.5 text-xs text-zinc-500">★ {formatStars(meta.stars)}</span>
           </div>
         );
       })()}

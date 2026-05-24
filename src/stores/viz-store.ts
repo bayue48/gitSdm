@@ -18,6 +18,12 @@ interface VizState {
   layoutType: LayoutType;
   toastMessage: string | null;
   theme: 'dark' | 'light';
+  selectedBranch: string | null;
+  compareBranch: string | null;
+  availableBranches: string[];
+  setSelectedBranch: (branch: string | null) => void;
+  setCompareBranch: (branch: string | null) => void;
+  setAvailableBranches: (branches: string[]) => void;
   setToastMessage: (msg: string | null) => void;
   setSearchQuery: (q: string) => void;
   toggleNodeTypeFilter: (type: NodeType) => void;
@@ -51,6 +57,12 @@ export const useVizStore = create<VizState>((set) => ({
   layoutType: 'force',
   toastMessage: null,
   theme: (typeof window !== 'undefined' ? (localStorage.getItem('theme') ?? 'dark') : 'dark') as 'dark' | 'light',
+  selectedBranch: null,
+  compareBranch: null,
+  availableBranches: [],
+  setSelectedBranch: (selectedBranch) => set({ selectedBranch }),
+  setCompareBranch: (compareBranch) => set({ compareBranch }),
+  setAvailableBranches: (availableBranches) => set({ availableBranches }),
   setToastMessage: (toastMessage) => set({ toastMessage }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   toggleNodeTypeFilter: (type) =>
@@ -93,5 +105,7 @@ export const useVizStore = create<VizState>((set) => ({
       onboardingStep: 0,
       layoutType: 'force',
       toastMessage: null,
+      selectedBranch: null,
+      compareBranch: null,
     }),
 }));

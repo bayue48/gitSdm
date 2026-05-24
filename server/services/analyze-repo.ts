@@ -15,7 +15,7 @@ import { annotateTree, findImportantFiles } from '../parser/file-classifier';
 import type { RepoAnalysis } from '../../src/types';
 
 export async function analyzeRepository(
-  input: string | { owner: string; repo: string },
+  input: string | { owner: string; repo: string; branch?: string },
 ): Promise<RepoAnalysis> {
   const parsed =
     typeof input === 'string'
@@ -27,7 +27,8 @@ export async function analyzeRepository(
   }
 
   const { owner, repo } = parsed;
-  const info = await fetchRepoInfo(owner, repo);
+  const branch = typeof parsed === 'object' && 'branch' in parsed ? parsed.branch : undefined;
+  const info = await fetchRepoInfo(owner, repo, branch);
   const cacheKey = analyzeCacheKey(owner, repo, info.sha);
 
   const cached = cache.get<RepoAnalysis>(cacheKey);
