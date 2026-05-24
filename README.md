@@ -26,8 +26,10 @@ Open [http://localhost:5173](http://localhost:5173). API routes are served via V
 | `OPENAI_API_KEY` | Required when `AI_PROVIDER=openai` |
 | `ANTHROPIC_API_KEY` | Required when `AI_PROVIDER=anthropic` |
 | `GEMINI_API_KEY` | Required when `AI_PROVIDER=gemini` |
-| `GEMINI_MODEL` | Optional when `AI_PROVIDER=gemini`; defaults to `gemini-2.5-flash` |
+| `GEMINI_MODEL` | Optional when `AI_PROVIDER=gemini`; see `.env.example` |
 | `GEMINI_API_VERSION` | Optional when `AI_PROVIDER=gemini`; defaults to `v1alpha` |
+| `OPENAI_MODEL` | Optional when `AI_PROVIDER=openai`; see `.env.example` |
+| `ANTHROPIC_MODEL` | Optional when `AI_PROVIDER=anthropic`; see `.env.example` |
 
 ## Scripts
 
@@ -57,6 +59,81 @@ For minimal setup, `GITHUB_TOKEN` is optional but recommended. AI features use `
 1. Push to GitHub and import in Vercel
 2. Set environment variables in the project dashboard
 3. Deploy — API routes in `/api` run as serverless functions
+
+## Deploy (Google Cloud Run)
+
+Cloud Run uses the Dockerfile in this repo. The container builds the Vite frontend, bundles the Node production server, and listens on the `PORT` value provided by Cloud Run.
+
+### Prerequisites
+
+- A Google Cloud project with billing enabled
+- `gcloud` CLI installed and authenticated
+- Artifact Registry and Cloud Run APIs enabled
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
+```
+
+### Build and Push
+
+Create an Artifact Registry Docker repository once:
+
+```bash
+gcloud artifacts repositories create gitsdm \
+  --repository-format=docker \
+  --location=us-central1 \
+  --description="gitSdm container images"
+```
+
+Build the image with Cloud Build:
+
+```bash
+gcloud builds submit \
+  --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest
+```
+
+### Deploy
+
+For the default mock AI provider:
+
+```bash
+gcloud run deploy gitsdm \
+  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars AI_PROVIDER=mock
+```
+
+With GitHub and AI API keys, prefer Secret Manager instead of putting secrets directly in command history:
+
+```bash
+printf "YOUR_GITHUB_TOKEN" | gcloud secrets create gitsdm-github-token --data-file=-
+printf "YOUR_GEMINI_API_KEY" | gcloud secrets create gitsdm-gemini-api-key --data-file=-
+
+gcloud run deploy gitsdm \
+  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars AI_PROVIDER=gemini \
+  --set-secrets GITHUB_TOKEN=gitsdm-github-token:latest,GEMINI_API_KEY=gitsdm-gemini-api-key:latest
+```
+
+After deployment, Cloud Run prints the service URL. Open that URL to use the app.
+
+To update an existing Cloud Run service after code changes, rebuild and redeploy with the same commands:
+
+```bash
+gcloud builds submit \
+  --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest
+
+gcloud run deploy gitsdm \
+  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
+  --region us-central1
+```
 
 ## Features
 
