@@ -1,6 +1,9 @@
 FROM node:22-alpine AS build
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+
+ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
+ENV PNPM_CONFIG_IGNORE_SCRIPTS=false
 
 WORKDIR /app
 
@@ -8,10 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 RUN apk add --no-cache libc6-compat python3 make g++
 
-RUN pnpm install \
-  --frozen-lockfile \
-  --ignore-scripts=false \
-  --config.minimum-release-age=0
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
