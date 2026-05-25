@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useVizStore, type SidebarTab } from '@/stores/viz-store';
 import {
   useExplain, useExplainNew, useArchitecture, useRefactor,
-  useHealth, useMermaid, useRoast, useReadmeEnhance
+  useHealth, useRoast, useReadmeEnhance
 } from '@/features/ai/useAI';
 import type { RepoAnalysis } from '@/types';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -40,14 +40,12 @@ export function AISidebar({ analysis }: AISidebarProps) {
 
   const [eli5Mode, setEli5Mode] = useState(false);
   const [activePlayground, setActivePlayground] = useState<'roast' | 'readme'>('roast');
-  const [activeArchitecture, setActiveArchitecture] = useState<'layers' | 'mermaid'>('layers');
 
   const explain = useExplain();
   const explainNew = useExplainNew();
   const architecture = useArchitecture();
   const health = useHealth();
   const refactor = useRefactor();
-  const mermaid = useMermaid();
   const roast = useRoast();
   const readmeEnhance = useReadmeEnhance();
 
@@ -105,24 +103,9 @@ export function AISidebar({ analysis }: AISidebarProps) {
     }
   }, [sidebarTab, activePlayground, owner, repo]);
 
-  // Trigger mermaid generation
-  const handleGenerateMermaid = () => {
-    mermaid.mutate({ owner, repo });
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setToastMessage(text.slice(0, 100) + '...');
-  };
-
-  const downloadMermaidAsFile = (text: string) => {
-    const element = document.createElement("a");
-    const file = new Blob([text], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${repo}_architecture.mermaid`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
   };
 
   const isExplainLoading = eli5Mode && !selectedNodeId ? explainNew.isPending : explain.isPending;
@@ -261,133 +244,35 @@ export function AISidebar({ analysis }: AISidebarProps) {
           {/* TAB 2: ARCHITECTURE */}
           {sidebarTab === 'architecture' && (
             <TabPanel key="architecture">
-              <div className="mb-4 flex border-b border-white/5 p-0.5 gap-1 bg-zinc-900/40 rounded-lg">
-                <button
-                  onClick={() => setActiveArchitecture('layers')}
-                  className={cn(
-                    "flex-1 py-1.5 text-xs rounded font-medium transition-all",
-                    activeArchitecture === 'layers'
-                      ? "bg-white/5 text-white"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  )}
-                >
-                  System Layers
-                </button>
-                <button
-                  onClick={() => setActiveArchitecture('mermaid')}
-                  className={cn(
-                    "flex-1 py-1.5 text-xs rounded font-medium transition-all",
-                    activeArchitecture === 'mermaid'
-                      ? "bg-white/5 text-white"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  )}
-                >
-                  Mermaid Diagram
-                </button>
-              </div>
-
-              {activeArchitecture === 'layers' ? (
-                architecture.isError ? (
-                  <AIErrorCard
-                    title="Failed to load system architecture"
-                    message={architecture.error instanceof Error ? architecture.error.message : String(architecture.error)}
-                    onRetry={() => architecture.mutate({ owner, repo })}
-                  />
-                ) : architecture.isPending ? (
-                  <LoadingBlocks />
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">System Architecture</h4>
-                      <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
-                        {architecture.data?.overview}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 border-t border-white/5 pt-4">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Architectural Modules</h4>
-                      {architecture.data?.layers.map((layer, i) => (
-                        <div key={i} className="rounded-lg border border-white/5 bg-zinc-900/20 p-2.5">
-                          <h5 className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full dark:bg-violet-400 bg-violet-600" />
-                            {layer.name}
-                          </h5>
-                          <p className="mt-1 text-[11px] text-zinc-400 leading-normal">{layer.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
+              {architecture.isError ? (
+                <AIErrorCard
+                  title="Failed to load system architecture"
+                  message={architecture.error instanceof Error ? architecture.error.message : String(architecture.error)}
+                  onRetry={() => architecture.mutate({ owner, repo })}
+                />
+              ) : architecture.isPending ? (
+                <LoadingBlocks />
               ) : (
                 <div className="space-y-4">
-                  {mermaid.isError ? (
-                    <AIErrorCard
-                      title="Failed to generate flowchart"
-                      message={mermaid.error instanceof Error ? mermaid.error.message : String(mermaid.error)}
-                      onRetry={handleGenerateMermaid}
-                    />
-                  ) : !mermaid.data && !mermaid.isPending ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-white/5 bg-zinc-900/20 p-8 text-center">
-                      <Map className="h-10 w-10 text-zinc-600 mb-2" />
-                      <h4 className="text-sm font-semibold text-white">Generate Code Flowchart</h4>
-                      <p className="mt-1 text-xs text-zinc-500 max-w-[240px] mx-auto">
-                        Analyze file imports and modules to build a beautiful visual architecture diagram in Mermaid.js.
-                      </p>
-                      <button
-                        onClick={handleGenerateMermaid}
-                        className="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-xs font-medium text-white hover:bg-violet-500 transition-all shadow-[0_0_15px_rgba(109,40,217,0.3)] hover:scale-[1.02]"
-                      >
-                        Generate Diagram
-                      </button>
-                    </div>
-                  ) : mermaid.isPending ? (
-                    <div className="space-y-4">
-                      <div className="ai-explain-loading rounded-lg border border-violet-500/20 bg-violet-500/10 p-3 text-[11px] uppercase tracking-[0.24em] dark:text-violet-200 text-violet-700">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent dark:border-violet-200 border-violet-700 animate-spin" />
-                          Mapping Flowchart...
-                        </div>
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">System Architecture</h4>
+                    <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
+                      {architecture.data?.overview}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 border-t border-white/5 pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Architectural Modules</h4>
+                    {architecture.data?.layers.map((layer, i) => (
+                      <div key={i} className="rounded-lg border border-white/5 bg-zinc-900/20 p-2.5">
+                        <h5 className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full dark:bg-violet-400 bg-violet-600" />
+                          {layer.name}
+                        </h5>
+                        <p className="mt-1 text-[11px] text-zinc-400 leading-normal">{layer.description}</p>
                       </div>
-                      <LoadingBlocks />
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-zinc-500">Mermaid Diagram Source</span>
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => copyToClipboard(mermaid.data?.diagram ?? '')}
-                            title="Copy Mermaid Code"
-                            className="flex h-7 w-7 items-center justify-center rounded bg-white/5 border border-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => downloadMermaidAsFile(mermaid.data?.diagram ?? '')}
-                            title="Download File"
-                            className="flex h-7 w-7 items-center justify-center rounded bg-white/5 border border-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={handleGenerateMermaid}
-                            title="Regenerate"
-                            className="flex h-7 w-7 items-center justify-center rounded bg-white/5 border border-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
-                          >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                      <pre className="overflow-x-auto rounded-lg bg-zinc-900 border border-white/5 p-3 text-xs font-mono text-zinc-300 max-h-[350px] scrollbar-thin">
-                        <code>{mermaid.data?.diagram}</code>
-                      </pre>
-                      <div className="rounded-lg border border-violet-500/10 bg-violet-500/5 p-3">
-                        <p className="text-[11px] dark:text-violet-300 text-violet-700 leading-normal">
-                          💡 **Tip**: Copy this code block and paste it directly into your GitHub README or Notion documents to render a visual chart!
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
               )}
             </TabPanel>

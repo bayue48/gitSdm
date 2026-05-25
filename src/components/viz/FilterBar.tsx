@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useVizStore } from '@/stores/viz-store';
 import { ChevronsDown, ChevronsRight, Network } from 'lucide-react';
+import { MermaidModal } from './MermaidModal';
 
 const LAYOUTS = [
   { type: 'force', label: 'Organic Cluster', icon: Network },
@@ -8,11 +10,30 @@ const LAYOUTS = [
   { type: 'TB', label: 'Vertical Tree', icon: ChevronsDown },
 ] as const;
 
-export function FilterBar() {
+interface FilterBarProps {
+  owner: string;
+  repo: string;
+}
+
+export function FilterBar({ owner, repo }: FilterBarProps) {
   const { layoutType, setLayoutType } = useVizStore();
+  const [isMermaidOpen, setIsMermaidOpen] = useState(false);
 
   return (
-    <div className="flex items-center justify-end border-b border-white/5 px-4 py-1.5">
+    <div className="flex items-center justify-between border-b border-white/5 px-4 py-1.5 bg-zinc-950/20">
+      {/* Left side actions */}
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => setIsMermaidOpen(true)}
+          className="flex items-center gap-1.5 rounded-md border border-white/5 bg-zinc-950 px-2.5 py-1 text-[10px] font-medium text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200 transition-all active:scale-[0.98]"
+          title="Show Architecture Mermaid Diagram"
+        >
+          <Network className="h-3 w-3 text-violet-400" />
+          <span>Architecture Diagram</span>
+        </button>
+      </div>
+
       {/* Layout Switcher */}
       <div className="flex items-center gap-1">
         <span className="mr-1.5 select-none text-[10px] font-medium uppercase tracking-wider text-zinc-500">
@@ -38,6 +59,13 @@ export function FilterBar() {
           ))}
         </div>
       </div>
+
+      <MermaidModal
+        isOpen={isMermaidOpen}
+        onClose={() => setIsMermaidOpen(false)}
+        owner={owner}
+        repo={repo}
+      />
     </div>
   );
 }
