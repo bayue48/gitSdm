@@ -29,7 +29,7 @@ export function CompareHUD({ diff, defaultBranch }: CompareHUDProps) {
   const deletedArray = Array.from(diff.deleted);
 
   return (
-    <div className="absolute left-4 bottom-16 z-20 w-80 font-sans">
+    <div className="absolute left-4 bottom-32 z-20 w-80 font-sans">
       <div className="rounded-xl border border-zinc-800/40 bg-zinc-950/95 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-zinc-800/20 bg-zinc-900/40 select-none">
@@ -112,10 +112,10 @@ export function CompareHUD({ diff, defaultBranch }: CompareHUDProps) {
                         <ul className="space-y-1">
                           {addedArray.map((path) => (
                             <li
-                                key={path}
-                                className="text-[10px] font-mono truncate text-zinc-300 bg-emerald-500/[0.04] px-1.5 py-0.5 rounded border border-emerald-500/10"
-                                title={path}
-                              >
+                              key={path}
+                              className="text-[10px] font-mono truncate text-zinc-300 bg-emerald-500/[0.04] px-1.5 py-0.5 rounded border border-emerald-500/10"
+                              title={path}
+                            >
                               {path}
                             </li>
                           ))}
@@ -133,10 +133,10 @@ export function CompareHUD({ diff, defaultBranch }: CompareHUDProps) {
                         <ul className="space-y-1">
                           {modifiedArray.map((path) => (
                             <li
-                                key={path}
-                                className="text-[10px] font-mono truncate text-zinc-300 bg-amber-500/[0.04] px-1.5 py-0.5 rounded border border-amber-500/10"
-                                title={path}
-                              >
+                              key={path}
+                              className="text-[10px] font-mono truncate text-zinc-300 bg-amber-500/[0.04] px-1.5 py-0.5 rounded border border-amber-500/10"
+                              title={path}
+                            >
                               {path}
                             </li>
                           ))}
@@ -154,10 +154,10 @@ export function CompareHUD({ diff, defaultBranch }: CompareHUDProps) {
                         <ul className="space-y-1">
                           {deletedArray.map((path) => (
                             <li
-                                key={path}
-                                className="text-[10px] font-mono truncate text-zinc-400 line-through bg-red-500/[0.04] px-1.5 py-0.5 rounded border border-red-500/10"
-                                title={path}
-                              >
+                              key={path}
+                              className="text-[10px] font-mono truncate text-zinc-400 line-through bg-red-500/[0.04] px-1.5 py-0.5 rounded border border-red-500/10"
+                              title={path}
+                            >
                               {path}
                             </li>
                           ))}
