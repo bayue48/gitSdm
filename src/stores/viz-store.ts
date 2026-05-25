@@ -96,7 +96,11 @@ export const useVizStore = create<VizState>((set) => ({
       return { diffStatusFilters: next };
     }),
   setSelectedBranch: (selectedBranch) => set({ selectedBranch }),
-  setCompareBranch: (compareBranch) => set({ compareBranch }),
+  setCompareBranch: (compareBranch) =>
+    set((s) => ({
+      compareBranch,
+      diffStatusFilters: compareBranch ? s.diffStatusFilters : new Set(),
+    })),
   setAvailableBranches: (availableBranches) => set({ availableBranches }),
   setToastMessage: (toastMessage) => set({ toastMessage }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),

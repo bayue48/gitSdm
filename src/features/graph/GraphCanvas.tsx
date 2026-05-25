@@ -42,6 +42,7 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
     layoutType,
     theme,
     activeFocusLayer,
+    compareBranch,
   } = useVizStore();
 
   const { fitView, setCenter } = useReactFlow();
@@ -337,45 +338,47 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
               </div>
 
               {/* Diff status section */}
-              <div className="space-y-1 pt-1.5 border-t border-white/5">
-                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block mb-0.5 select-none">Change Status</span>
-                <button
-                  type="button"
-                  onClick={() => toggleDiffStatusFilter('added')}
-                  title="Filter by Added Files"
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
-                    diffStatusFilters.size > 0 && !diffStatusFilters.has('added') && "opacity-40"
-                  )}
-                >
-                  <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-emerald-500 select-none bg-emerald-500/10 border border-emerald-500/20 rounded font-mono shrink-0">+</span>
-                  <span className="text-[11px] font-medium text-zinc-300">Added File</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleDiffStatusFilter('modified')}
-                  title="Filter by Modified Files"
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
-                    diffStatusFilters.size > 0 && !diffStatusFilters.has('modified') && "opacity-40"
-                  )}
-                >
-                  <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-amber-500 select-none bg-amber-500/10 border border-amber-500/20 rounded font-mono shrink-0">~</span>
-                  <span className="text-[11px] font-medium text-zinc-300">Modified File</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleDiffStatusFilter('deleted')}
-                  title="Filter by Deleted Files"
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
-                    diffStatusFilters.size > 0 && !diffStatusFilters.has('deleted') && "opacity-40"
-                  )}
-                >
-                  <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-red-500 select-none bg-red-500/10 border border-red-500/20 rounded font-mono shrink-0">-</span>
-                  <span className="text-[11px] font-medium text-zinc-300">Deleted File</span>
-                </button>
-              </div>
+              {compareBranch && (
+                <div className="space-y-1 pt-1.5 border-t border-white/5">
+                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block mb-0.5 select-none">Change Status</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleDiffStatusFilter('added')}
+                    title="Filter by Added Files"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
+                      diffStatusFilters.size > 0 && !diffStatusFilters.has('added') && "opacity-40"
+                    )}
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-emerald-500 select-none bg-emerald-500/10 border border-emerald-500/20 rounded font-mono shrink-0">+</span>
+                    <span className="text-[11px] font-medium text-zinc-300">Added File</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleDiffStatusFilter('modified')}
+                    title="Filter by Modified Files"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
+                      diffStatusFilters.size > 0 && !diffStatusFilters.has('modified') && "opacity-40"
+                    )}
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-amber-500 select-none bg-amber-500/10 border border-amber-500/20 rounded font-mono shrink-0">~</span>
+                    <span className="text-[11px] font-medium text-zinc-300">Modified File</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleDiffStatusFilter('deleted')}
+                    title="Filter by Deleted Files"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
+                      diffStatusFilters.size > 0 && !diffStatusFilters.has('deleted') && "opacity-40"
+                    )}
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center text-xs font-bold text-red-500 select-none bg-red-500/10 border border-red-500/20 rounded font-mono shrink-0">-</span>
+                    <span className="text-[11px] font-medium text-zinc-300">Deleted File</span>
+                  </button>
+                </div>
+              )}
             </Panel>
           </>
         )}
