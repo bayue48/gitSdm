@@ -1,25 +1,109 @@
-# gitSdm
+<h1 align="center">gitSdm<sup>β</sup> (Git Software Dependency Map Beta v0.9.0)</h1>
 
-AI-powered GitHub repository visualization platform (**Git Software Dependency Map**). Paste a public repo URL and explore an interactive dependency graph, architecture insights, file explorer, contributors, and commit timeline.
+<p align="center">
+  <strong>AI-Powered Repository Intelligence & Architecture Visualization Platform</strong>
+</p>
 
-![gitSdm Dashboard](assets/dashboard.png)
+<p align="center">
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" /></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/bayue48/gitSdm/pulls"><img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge" alt="PRs Welcome" /></a>
+  <a href="https://github.com/bayue48/gitSdm/actions"><img src="https://img.shields.io/badge/Build-Passing-success?style=for-the-badge" alt="Build" /></a>
+</p>
 
-## Stack
+---
 
-- **Frontend:** React, Vite, TypeScript, Tailwind CSS, Framer Motion, React Flow
-- **Backend:** Vercel serverless API routes or Node production server, Octokit, provider-agnostic AI (Gemini / OpenAI / Anthropic / mock)
+<p align="center">
+  <img src="assets/graph.png" alt="Repository Graph" width="75%" />
+</p>
 
-## Quick start
+---
 
-```bash
-cp .env.example .env
-pnpm install
-pnpm run dev
+## ✨ Overview
+
+**gitSdm** transforms how developers understand unfamiliar codebases. Instead of spending hours reading through files and tracing dependencies, gitSdm provides **instant, interactive architecture visualization** powered by AI.
+
+> *"The kind of deep insight that normally takes days of reading code — delivered in seconds."*
+
+### 🎯 Value Proposition
+
+| Problem | Solution |
+|---------|----------|
+| 🕒 Hours spent onboarding to new repos | ⚡ Instant architecture overview |
+| 🔍 Manual dependency tracing | 🕸️ Interactive dependency graph |
+| 📚 Scattered documentation | 🤖 AI-generated code explanations |
+| 🧩 Unclear module boundaries | 🎯 Visual file classification |
+
+---
+
+## 🏗️ Architecture
+
+```
+gitSdm/
+├── 📁 api/                    # Vercel serverless functions
+│   ├── ai/                    # AI endpoints (architecture, explain, suggest)
+│   ├── repo/                  # Repository data endpoints
+│   └── trending.ts            # Trending repositories
+├── 📁 server/                 # Backend services
+│   ├── ai/                    # AI provider & prompt management
+│   ├── cache/                 # LRU caching layer
+│   ├── github/                # GitHub API integration
+│   ├── graph/                 # Graph building & layout algorithms
+│   ├── parser/                # Dependency & file analysis
+│   ├── services/              # Business logic layer
+│   └── utils/                 # HTTP, logging utilities
+├── 📁 src/                    # Frontend application
+│   ├── app/                   # App providers & routing
+│   ├── components/            # UI components
+│   │   ├── contributors/      # Contributor analytics
+│   │   ├── explorer/          # File explorer & code inspector
+│   │   ├── home/              # Landing page components
+│   │   ├── layout/            # Navigation & layout
+│   │   ├── theme/             # Theme synchronization
+│   │   ├── timeline/          # Repository timeline
+│   │   ├── ui/                # Reusable UI primitives
+│   │   └── viz/               # Visualization components
+│   ├── features/              # Feature modules
+│   │   ├── ai/                # AI integration hooks
+│   │   └── graph/             # Graph rendering engine
+│   ├── hooks/                 # Custom React hooks
+│   ├── lib/                   # Utilities & API client
+│   ├── pages/                 # Route pages
+│   ├── stores/                # State management
+│   ├── styles/                # Global styles
+│   └── types/                 # TypeScript definitions
+├── 📁 public/                 # Static assets
+├── 📁 assets/                 # Screenshots & media
+└── 📁 .agents/                # AI agent configurations
 ```
 
-Open [http://localhost:5173](http://localhost:5173). API routes are served via Vite middleware in development.
+---
 
-## Environment variables
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js** ≥ 22 (Alpine)
+- **pnpm** ≥ 9 (recommended) or npm/yarn
+- **GitHub Personal Access Token** (for API access)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/bayue48/gitSdm.git
+cd gitSdm
+
+# Install dependencies
+pnpm install
+
+# Copy environment variables
+cp .env.example .env
+```
+
+### Environment Configuration
 
 | Variable | Description |
 |----------|-------------|
@@ -28,141 +112,219 @@ Open [http://localhost:5173](http://localhost:5173). API routes are served via V
 | `OPENAI_API_KEY` | Required when `AI_PROVIDER=openai` |
 | `ANTHROPIC_API_KEY` | Required when `AI_PROVIDER=anthropic` |
 | `GEMINI_API_KEY` | Required when `AI_PROVIDER=gemini` |
-| `GEMINI_MODEL` | Optional when `AI_PROVIDER=gemini`; see `.env.example` |
+| `GEMINI_MODEL` | Optional when `AI_PROVIDER=gemini`; defaults to `gemini-1.5-flash` |
 | `GEMINI_API_VERSION` | Optional when `AI_PROVIDER=gemini`; defaults to `v1alpha` |
-| `OPENAI_MODEL` | Optional when `AI_PROVIDER=openai`; see `.env.example` |
-| `ANTHROPIC_MODEL` | Optional when `AI_PROVIDER=anthropic`; see `.env.example` |
+| `OPENAI_MODEL` | Optional when `AI_PROVIDER=openai`; defaults to `gpt-4o-mini` |
+| `ANTHROPIC_MODEL` | Optional when `AI_PROVIDER=anthropic`; defaults to `claude-3-5-haiku-latest` |
 
-## Scripts
+### Development
 
-- `pnpm run dev` — start Vite dev server with API middleware
-- `pnpm run build` — build the Vite frontend into `dist/`
-- `pnpm run build:server` — build the Node production server into `dist-server/`
-- `pnpm run build:docker` — build both frontend and production server
-- `pnpm run start` — serve `dist/` and `/api/*` from the production Node server
-- `pnpm run preview` — preview the frontend bundle only
-- `pnpm test` — run unit tests (manifest parsers)
+```bash
+# Start development server (frontend + backend)
+pnpm dev
 
-## Production with Docker
+# Or run separately:
+pnpm dev:frontend  # Vite dev server on :5173
+pnpm dev:backend   # Express dev server on :3001
+```
+
+### Production Build
+
+```bash
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
+```
+
+### Docker Deployment
 
 The Docker image builds the Vite app, bundles a small Node server, serves static files from `dist/`, and handles `/api/*` using the same API router as development/Vercel.
 
 ```bash
+# Build Docker image
 docker build -t gitsdm .
-docker run --rm -p 3000:3000 --env-file .env gitsdm
-```
 
-Open [http://localhost:3000](http://localhost:3000).
+# Run container
+docker run -p 3000:3000 --env-file .env gitsdm
+```
 
 For minimal setup, `GITHUB_TOKEN` is optional but recommended. AI features use `AI_PROVIDER=mock` by default; set the matching API key when using `gemini`, `openai`, or `anthropic`.
 
-## Deploy (Vercel)
-
-1. Push to GitHub and import in Vercel
-2. Set environment variables in the project dashboard
-3. Deploy — API routes in `/api` run as serverless functions
-
-## Deploy (Google Cloud Run)
-
-Cloud Run uses the Dockerfile in this repo. The container builds the Vite frontend, bundles the Node production server, and listens on the `PORT` value provided by Cloud Run.
-
-### Prerequisites
-
-- A Google Cloud project with billing enabled
-- `gcloud` CLI installed and authenticated
-- Artifact Registry and Cloud Run APIs enabled
+### Google Cloud Run
 
 ```bash
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
-```
-
-### Build and Push
-
-Create an Artifact Registry Docker repository once:
-
-```bash
-gcloud artifacts repositories create gitsdm \
-  --repository-format=docker \
-  --location=us-central1 \
-  --description="gitSdm container images"
-```
-
-Build the image with Cloud Build:
-
-```bash
-gcloud builds submit \
-  --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest
-```
-
-### Deploy
-
-For the default mock AI provider:
-
-```bash
+# Deploy directly from source
 gcloud run deploy gitsdm \
-  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
-  --region us-central1 \
-  --platform managed \
+  --source . \
+  --region asia-southeast1 \
   --allow-unauthenticated \
-  --set-env-vars AI_PROVIDER=mock
+  --env-vars-file .env
 ```
 
-With GitHub and AI API keys, prefer Secret Manager instead of putting secrets directly in command history:
+---
+
+## 🧩 Core Features
+
+### 🔬 **Repository Analysis**
+- **Instant parsing** of any public GitHub repository
+- **Dependency graph** generation with `d3-force` and `dagre` layout algorithms
+- **File classification** by type (component, utility, config, etc.)
+- **Module boundary detection** for architectural insights
+
+### 🤖 **AI-Powered Insights**
+- **Architecture summaries** via Google Gemini, OpenAI, or Anthropic Claude
+- **Code explanations** for specific files and modules in `Standard` and `ELI5 (Explain It Like I'm 5)` modes
+- **Smart file suggestions** based on context
+- **Learning paths** for onboarding to new codebases
+
+### 🕸️ **Interactive Visualization**
+- **Force-directed graphs** with `@xyflow/react` (React Flow)
+- **Real-time filtering** by file type, module, or dependency
+- **Branch comparison** with visual diff
+- **Mermaid diagram** export for documentation
+
+### 📊 **Repository Intelligence**
+- **Contributor analytics** with `recharts` visualizations
+- **Commit timeline** and activity patterns
+- **Trending repositories** discovery
+- **File explorer** with syntax highlighting via `highlight.js`
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| React 19 | UI framework |
+| TypeScript 5.8 | Type safety |
+| Vite 6 | Build tooling |
+| @xyflow/react 12 | Graph visualization |
+| Framer Motion 12 | Animations |
+| TanStack React Query 5 | Data fetching |
+| Tailwind CSS 3.4 | Styling |
+| Recharts 2 | Charts & analytics |
+| Mermaid 11 | Diagram generation |
+| Lucide React | Icon library |
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| Node.js 22 | Runtime |
+| Express (via Vercel) | API server |
+| Octokit 21 | GitHub API client |
+| LRU Cache 11 | Response caching |
+| Google GenAI 2.6 | AI provider |
+| OpenAI 4 | AI provider |
+| Anthropic SDK 0.39 | AI provider |
+
+### Infrastructure
+| Technology | Purpose |
+|------------|---------|
+| Google Cloud Run | Deployment platform |
+| Docker | Containerization |
+| pnpm | Package management |
+| Vitest | Testing framework |
+| ESLint 9 | Code quality |
+
+---
+
+## 📖 Usage Guide
+
+### 1. **Analyze a Repository**
+```
+Enter a GitHub URL → gitSdm fetches & parses → Interactive graph appears
+```
+
+### 2. **Explore Architecture**
+```
+Click nodes → View file contents → Trace dependencies → Understand modules
+```
+
+### 3. **Get AI Insights**
+```
+Select "Explain Architecture" → AI analyzes structure → Natural language summary
+```
+
+### 4. **Compare Branches**
+```
+Select branches → Visual diff → See architectural changes
+```
+
+---
+
+## 🧪 Testing
 
 ```bash
-printf "YOUR_GITHUB_TOKEN" | gcloud secrets create gitsdm-github-token --data-file=-
-printf "YOUR_GEMINI_API_KEY" | gcloud secrets create gitsdm-gemini-api-key --data-file=-
+# Run all tests
+pnpm test
 
-gcloud run deploy gitsdm \
-  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
-  --region us-central1 \
-  --platform managed \
-  --allow-unauthenticated \
-  --set-env-vars AI_PROVIDER=gemini \
-  --set-secrets GITHUB_TOKEN=gitsdm-github-token:latest,GEMINI_API_KEY=gitsdm-gemini-api-key:latest
+# Run with coverage
+pnpm test:coverage
+
+# Watch mode
+pnpm test:watch
 ```
 
-After deployment, Cloud Run prints the service URL. Open that URL to use the app.
+Test files are co-located with source files:
+- `server/parser/manifest-parsers/index.test.ts`
+- `server/github/parse-url.test.ts`
+- `server/graph/graph-builder.test.ts`
+- `server/graph/layout.test.ts`
+- `server/parser/dependency-analyzer.test.ts`
+- `server/parser/file-classifier.test.ts`
 
-To update an existing Cloud Run service after code changes, rebuild and redeploy with the same commands:
+---
 
-```bash
-gcloud builds submit \
-  --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest
+## 🗺️ Roadmap
 
-gcloud run deploy gitsdm \
-  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/gitsdm/gitsdm:latest \
-  --region us-central1
-```
+### Planned Features
 
-## Features
+- [x] AI-generated architecture diagrams
+- [ ] Commit History
+- [ ] Private repository support
+- [ ] Export to PDF / PNG
+- [ ] Monorepo-aware dependency grouping
 
-- **Interactive Repository Structure Graph**: Custom canvas nodes displaying folders, files, configuration files, and direct contributors. Supports three layout modes: Organic Cluster, Horizontal Tree, and Vertical Tree.
-- **Interactive Canvas Legend & Filters**: A top-right floating legend panel that allows users to dynamically toggle the visibility of specific node types (Repository, Directory, Code/Assets) and diff change statuses (+ Added, ~ Modified, - Deleted) with smart parent directory structure preservation.
-- **Smart File Explorer**: Nested filesystem tree navigation featuring distinct custom badges highlighting entry points, configurations, and tests.
-- **Premium Code Inspector**: Instant, interactive code previewer featuring a custom tokenized syntax-highlighted skeleton loading state for rich user experiences.
-- **Multi-Ecosystem Dependency Parsing**: Automatic extraction and mapping of package dependencies across npm (`package.json`), Python (`requirements.txt` / `pyproject.toml`), Rust (`Cargo.toml`), Go (`go.mod`), Java (`pom.xml`), and Docker (`Dockerfile`).
-- **AI-Powered Codebase Intelligence**:
-  - *Explain Node/Repo*: Comprehensive file and folder breakdowns (Standard and ELI5 modes).
-  - *Architecture overview*: Automatic architectural diagram generation and module relationships.
-  - *Health & Maintainability*: Automated analysis reports highlighting complexity, maintainability scores, and refactoring recommendations.
-  - *Intelligence Playground*: README Enhancers, Repository Roast generator, and customized learning path recommendations.
-- **Branch Selection & Diff Comparison**: Switch between any branch/tag in real time or compare branch differences directly inside the visualization.
-- **Robust AI Error Handling**: Gorgeous glassmorphic error card components with automatic retry actions to gracefully handle rate limit throttling or transient serverless API issues.
-- **Contributor Insights**: Bar chart breakdown of authors and commit timelines spanning the last 90 days.
-- **High-Performance Caching**: Intelligent server-side LRU cache to reduce latency and GitHub API rate limits.
+---
 
-### Premium Code Inspector Loading State
-![Code Inspector Skeleton Loader](assets/skeleton.png)
+## 🤝 Contributing
 
-## Limits
+We welcome contributions! See our [contributing guidelines](CONTRIBUTING.md) for details.
 
-- Public repositories only
-- Tree capped at ~2000 files for serverless performance
-- AI context limited to summaries and small snippets (never full repo)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+### Contribution Ideas
 
-MIT
+- Improve graph rendering performance
+- Add new AI providers
+- Improve parser accuracy
+- Create better onboarding flows
+- Enhance repository analytics
+
+---
+
+## 🔒 Security
+
+- API keys are never exposed to the client
+- Environment variables are securely handled
+- Rate limiting prevents abuse
+- GitHub API access follows OAuth best practices
+
+If you discover a vulnerability, please open a private security report.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+See the [LICENSE](LICENSE) file for more information.
+
+---

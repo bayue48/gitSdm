@@ -88,6 +88,7 @@ async function createGeminiProvider(overrideKey?: string): Promise<AIProvider> {
         model,
         contents,
         config: {
+          maxOutputTokens: 4096,
           temperature: 0.2,
           systemInstruction,
           responseMimeType: options?.json ? 'application/json' : undefined,
@@ -116,7 +117,7 @@ async function createOpenAIProvider(overrideKey?: string): Promise<AIProvider> {
       const response = await client.chat.completions.create({
         model,
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
-        max_tokens: 2048,
+        max_tokens: 4096,
         temperature: 0.2,
         response_format: options?.json ? { type: 'json_object' } : undefined,
       });
@@ -141,7 +142,7 @@ async function createAnthropicProvider(overrideKey?: string): Promise<AIProvider
 
       const response = await client.messages.create({
         model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         system,
         messages: userMessages.map((m) => ({
           role: m.role === 'assistant' ? 'assistant' : 'user',
