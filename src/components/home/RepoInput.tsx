@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Github, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { GlowButton } from '@/components/ui/GlowButton';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { fetchAppConfig } from '@/lib/api-client';
 import { parseRepoFromUrl, LAST_REPO_KEY } from '@/lib/utils';
 
 interface RepoInputProps {
@@ -25,7 +26,29 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
   const [url, setUrl] = useState(initialUrl);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showMockPresets, setShowMockPresets] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let ignore = false;
+
+    fetchAppConfig()
+      .then((config) => {
+        if (!ignore) setShowMockPresets(config.aiProvider === 'mock');
+      })
+      .catch(() => {
+        if (!ignore) setShowMockPresets(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const presets = useMemo(
+    () => PRESETS.filter((item) => showMockPresets || !item.repo.startsWith('mock/')),
+    [showMockPresets],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +118,7 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
         <div className="mt-3 border-t border-white/5 pt-3 px-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="repo-preset-try text-[10px] font-semibold uppercase tracking-wider mr-1">TRY:</span>
-            {PRESETS.map((item) => (
+            {presets.map((item) => (
               <button
                 key={item.repo}
                 type="button"

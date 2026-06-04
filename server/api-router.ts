@@ -75,6 +75,13 @@ export async function handleApiRequest(
       return true;
     }
 
+    if (pathname === '/api/config' && method === 'GET') {
+      sendJson(res, 200, {
+        aiProvider: (process.env.AI_PROVIDER ?? 'mock').toLowerCase(),
+      });
+      return true;
+    }
+
     if (pathname === '/api/cache/clear' && method === 'POST') {
       clearAllCaches();
       logApi('/api/cache/clear', { durationMs: Date.now() - start });

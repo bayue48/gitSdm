@@ -77,6 +77,10 @@ export async function fetchTrending(): Promise<TrendingRepo[]> {
   return data.repos;
 }
 
+export async function fetchAppConfig(): Promise<{ aiProvider: string }> {
+  return request<{ aiProvider: string }>('/api/config');
+}
+
 export async function aiExplain(body: AIExplainRequest & { branch?: string }): Promise<AIExplainResponse> {
   return request<AIExplainResponse>('/api/ai/explain', {
     method: 'POST',
