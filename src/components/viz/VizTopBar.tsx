@@ -5,8 +5,7 @@ import { formatStars } from '@/lib/utils';
 import { useState } from 'react';
 import { useVizStore } from '@/stores/viz-store';
 import { BranchSelector } from './BranchSelector';
-import { ApiKeyPopover } from './ApiKeyPopover';
-import { GitHubPatPopover } from './GitHubPatPopover';
+import { SettingsPopover } from './SettingsPopover';
 
 interface VizTopBarProps {
   meta?: RepoMeta;
@@ -74,12 +73,11 @@ export function VizTopBar({ meta }: VizTopBarProps) {
           {theme === 'dark' ? <Sun className="h-4 w-4 text-zinc-400" /> : <Moon className="h-4 w-4 text-zinc-400" />}
         </button>
         */}
-        <ApiKeyPopover />
-        <GitHubPatPopover />
+        <SettingsPopover />
         <button
           type="button"
           onClick={handleShare}
-          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-[0.98]"
+          className="flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-[0.98]"
         >
           {copied ? (
             <>

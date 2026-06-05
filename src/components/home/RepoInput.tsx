@@ -9,7 +9,6 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { getVisibleRepoPresets } from '@/components/home/repo-presets';
 import { fetchAppConfig } from '@/lib/api-client';
 import { parseRepoFromUrl, LAST_REPO_KEY } from '@/lib/utils';
-import { GitHubPatPopover } from '@/components/viz/GitHubPatPopover';
 
 interface RepoInputProps {
   initialUrl?: string;
@@ -23,6 +22,7 @@ const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   Atom,
   Triangle,
   Terminal,
+  Zap,
   GitBranch,
 };
 
@@ -93,14 +93,15 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
               disabled={loading}
             />
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
-            <GitHubPatPopover />
-            <GlowButton type="submit" loading={loading} className="w-full sm:w-auto">
-              <Zap className="h-4 w-4" />
-              Analyze
-              <ArrowRight className="h-4 w-4" />
-            </GlowButton>
-          </div>
+          <GlowButton
+            type="submit"
+            loading={loading}
+            className="h-[46px] w-full sm:w-auto shrink-0"
+          >
+            <Zap className="h-4 w-4" />
+            Analyze
+            <ArrowRight className="h-4 w-4" />
+          </GlowButton>
         </form>
 
         {error && (
@@ -116,7 +117,7 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
         {/* Preset pills */}
         <div className="mt-3 border-t border-white/5 pt-3 px-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="repo-preset-try text-[10px] font-semibold uppercase tracking-wider mr-1">TRY:</span>
+            <span className="repo-preset-try text-[10px] font-semibold uppercase tracking-wider mr-1 text-zinc-500">TRY:</span>
             {presets.map((item) => {
               const IconComponent = PRESET_ICONS[item.icon || ''] || Github;
               return (
@@ -125,11 +126,11 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
                   type="button"
                   onClick={() => handlePreset(item.repo)}
                   title={item.repo}
-                  className="repo-preset-pill group flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all duration-150 font-medium cursor-pointer"
+                  className="repo-preset-pill group flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 text-[11px] transition-all duration-150 font-medium cursor-pointer"
                 >
-                  <IconComponent className="h-3.5 w-3.5 text-zinc-400 group-hover:text-violet-400 transition-colors" />
-                  <span className="repo-preset-label">{item.label}</span>
-                  <span className="repo-preset-desc text-[9px] font-mono transition-colors">{item.desc}</span>
+                  <IconComponent className="h-3 w-3 text-zinc-400 group-hover:text-violet-400 transition-colors" />
+                  <span className="repo-preset-label text-zinc-300 group-hover:text-white transition-colors">{item.label}</span>
+                  <span className="repo-preset-desc text-[9px] font-mono text-zinc-500 group-hover:text-violet-300/60 transition-colors">{item.desc}</span>
                 </button>
               );
             })}

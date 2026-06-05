@@ -1,8 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { GitBranch } from 'lucide-react';
 import { GlowButton } from '@/components/ui/GlowButton';
-import { ApiKeyPopover } from '@/components/viz/ApiKeyPopover';
-import { GitHubPatPopover } from '@/components/viz/GitHubPatPopover';
+import { SettingsPopover } from '@/components/viz/SettingsPopover';
 // import { useVizStore } from '@/stores/viz-store';
 
 export function Navbar() {
@@ -52,12 +51,11 @@ export function Navbar() {
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           */}
-          <ApiKeyPopover />
-          <GitHubPatPopover />
+          <SettingsPopover />
           <GlowButton
             type="button"
             variant="ghost"
-            className="!py-1.5 !px-3 text-xs"
+            className="h-8 !py-0 !px-3 text-xs"
             onClick={() => goToSection('analyze')}
           >
             Analyze

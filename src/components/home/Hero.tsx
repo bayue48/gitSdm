@@ -60,7 +60,7 @@ export function Hero() {
               transition={{ duration: node.duration, repeat: Infinity, ease: 'easeInOut', delay: node.delay }}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate max-w-[160px]">{node.label}</span>
+              <span className="truncate max-w-[280px]">{node.label}</span>
               <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-current animate-pulse" />
             </motion.div>
           );
