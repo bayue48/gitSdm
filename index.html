@@ -8,11 +8,21 @@
   <meta name="description" content="AI-powered GitHub repository visualization platform" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=block" rel="stylesheet" />
   <title>gitSdmᵝ — Git Software Dependency Map</title>
+  <style>
+    html.fonts-loading body {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+    body {
+      transition: opacity 0.15s ease-out;
+    }
+  </style>
   <script>
     (function () {
       try {
+        // Theme synchronization
         var theme = localStorage.getItem('theme');
         if (theme === 'light') {
           document.documentElement.classList.add('light');
@@ -20,8 +30,28 @@
         } else {
           document.documentElement.style.colorScheme = 'dark';
         }
+
+        // Hide UI until critical fonts load
+        if ('fonts' in document) {
+          document.documentElement.classList.add('fonts-loading');
+          
+          var timeout = setTimeout(function () {
+            document.documentElement.classList.remove('fonts-loading');
+          }, 1000);
+
+          Promise.all([
+            document.fonts.load('1em "IBM Plex Sans"'),
+            document.fonts.load('1em "JetBrains Mono"')
+          ]).then(function () {
+            clearTimeout(timeout);
+            document.documentElement.classList.remove('fonts-loading');
+          }).catch(function () {
+            clearTimeout(timeout);
+            document.documentElement.classList.remove('fonts-loading');
+          });
+        }
       } catch (e) {
-        // ignore
+        // fallback
       }
     })();
   </script>

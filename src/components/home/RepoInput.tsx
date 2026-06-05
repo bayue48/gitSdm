@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Github, Zap } from 'lucide-react';
+import { ArrowRight, Github, Zap, ListTodo, Boxes, Atom, Triangle, Terminal, GitBranch } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { GlowButton } from '@/components/ui/GlowButton';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -14,6 +14,15 @@ interface RepoInputProps {
 }
 
 export { REPO_PRESETS as PRESETS } from '@/components/home/repo-presets';
+
+const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  ListTodo,
+  Boxes,
+  Atom,
+  Triangle,
+  Terminal,
+  GitBranch,
+};
 
 
 export function RepoInput({ initialUrl = '' }: RepoInputProps) {
@@ -112,18 +121,22 @@ export function RepoInput({ initialUrl = '' }: RepoInputProps) {
         <div className="mt-3 border-t border-white/5 pt-3 px-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="repo-preset-try text-[10px] font-semibold uppercase tracking-wider mr-1">TRY:</span>
-            {presets.map((item) => (
-              <button
-                key={item.repo}
-                type="button"
-                onClick={() => handlePreset(item.repo)}
-                title={item.repo}
-                className="repo-preset-pill group flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all duration-150 font-medium"
-              >
-                <span className="repo-preset-label">{item.label}</span>
-                <span className="repo-preset-desc text-[9px] font-mono transition-colors">{item.desc}</span>
-              </button>
-            ))}
+            {presets.map((item) => {
+              const IconComponent = PRESET_ICONS[item.icon || ''] || Github;
+              return (
+                <button
+                  key={item.repo}
+                  type="button"
+                  onClick={() => handlePreset(item.repo)}
+                  title={item.repo}
+                  className="repo-preset-pill group flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all duration-150 font-medium cursor-pointer"
+                >
+                  <IconComponent className="h-3.5 w-3.5 text-zinc-400 group-hover:text-violet-400 transition-colors" />
+                  <span className="repo-preset-label">{item.label}</span>
+                  <span className="repo-preset-desc text-[9px] font-mono transition-colors">{item.desc}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </GlassCard>
