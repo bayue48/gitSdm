@@ -12,7 +12,7 @@ import {
   type Edge,
   type DefaultEdgeOptions,
 } from '@xyflow/react';
-import { FolderGit2, Folder, FileCode, Download, Loader2 } from 'lucide-react';
+import { FolderGit2, Folder, FileCode, Download, Loader2, Zap } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -54,6 +54,8 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
     theme,
     activeFocusLayer,
     compareBranch,
+    blastRadiusActive,
+    setBlastRadiusActive,
   } = useVizStore();
 
   const reactFlowInstance = useReactFlow();
@@ -166,6 +168,12 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
     return lookup;
   }, [filtered.edges]);
 
+  const epicenterLabel = useMemo(() => {
+    if (!selectedNodeId) return '';
+    const epic = layouted.nodes.find(n => n.id === selectedNodeId) as Node<{ path?: string; label?: string }> | undefined;
+    return epic?.data?.path || epic?.data?.label || '';
+  }, [selectedNodeId, layouted.nodes]);
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -176,22 +184,23 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
 
     const nodesWithClasses = rawNodes.map((n) => ({
       ...n,
-      className: getNodeClassName(n, selectedNodeId, highlightedNodeIds),
+      className: getNodeClassName(n, selectedNodeId, highlightedNodeIds, blastRadiusActive),
     }));
 
     const edgesWithStyles = rawEdges.map((e) => {
       const isSelectedNodeConnected = selectedNodeId && (e.source === selectedNodeId || e.target === selectedNodeId);
+      const isBlastRadiusPropagation = blastRadiusActive && highlightedNodeIds.has(e.source) && highlightedNodeIds.has(e.target) && e.type === 'imports';
       return {
         ...e,
         type: layoutType === 'force' ? 'default' : 'smoothstep',
-        style: getEdgeStyle(e, selectedNodeId, highlightedNodeIds, nodeById, theme),
-        animated: !!isSelectedNodeConnected,
+        style: getEdgeStyle(e, selectedNodeId, highlightedNodeIds, nodeById, theme, blastRadiusActive),
+        animated: !!isSelectedNodeConnected || isBlastRadiusPropagation,
       };
     });
 
     setNodes(nodesWithClasses as Node[]);
     setEdges(edgesWithStyles as Edge[]);
-  }, [layouted, selectedNodeId, highlightedNodeIds, layoutType, theme, setNodes, setEdges]);
+  }, [layouted, selectedNodeId, highlightedNodeIds, layoutType, theme, setNodes, setEdges, blastRadiusActive]);
 
   useEffect(() => {
     // Only fit view initially if no node is selected/focused
@@ -232,6 +241,63 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
     }
   }, [selectedNodeId, focusedFilePath, nodes, setCenter]);
 
+  // BFS to calculate all transitive dependents (Change Blast Radius)
+  const getBlastRadiusNodeIds = useCallback((
+    selectedId: string,
+    allNodes: Node[],
+    allEdges: Edge[]
+  ): Set<string> => {
+    const affected = new Set<string>([selectedId]);
+    const queue: string[] = [];
+  
+    const targetNode = allNodes.find(n => n.id === selectedId);
+    if (!targetNode) return affected;
+  
+    if (targetNode.type === 'file') {
+      queue.push(selectedId);
+    } else if (targetNode.type === 'folder') {
+      const folderPath = targetNode.data?.path as string;
+      if (folderPath) {
+        const containedFiles = allNodes.filter(
+          n => n.type === 'file' && n.data?.path && (n.data.path as string).startsWith(folderPath + '/')
+        );
+        for (const fileNode of containedFiles) {
+          affected.add(fileNode.id);
+          queue.push(fileNode.id);
+        }
+      }
+    }
+  
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      for (const edge of allEdges) {
+        if (edge.target === curr && edge.type === 'imports') {
+          const dependentId = edge.source;
+          if (!affected.has(dependentId)) {
+            affected.add(dependentId);
+            queue.push(dependentId);
+          }
+        }
+      }
+    }
+  
+    return affected;
+  }, []);
+
+  // Update highlightedNodeIds automatically when selection or blast radius mode changes
+  useEffect(() => {
+    if (!selectedNodeId) {
+      setHighlightedNodeIds(new Set());
+      return;
+    }
+    if (blastRadiusActive) {
+      const affected = getBlastRadiusNodeIds(selectedNodeId, layouted.nodes as Node[], layouted.edges as Edge[]);
+      setHighlightedNodeIds(affected);
+    } else {
+      setHighlightedNodeIds(new Set(connectedNodeIdsByNodeId.get(selectedNodeId) ?? [selectedNodeId]));
+    }
+  }, [blastRadiusActive, selectedNodeId, layouted, connectedNodeIdsByNodeId, setHighlightedNodeIds, getBlastRadiusNodeIds]);
+
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (readOnly) return;
@@ -242,10 +308,8 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
         setFocusedFilePath(node.data.path as string);
         setInspectorOpen(true);
       }
-
-      setHighlightedNodeIds(new Set(connectedNodeIdsByNodeId.get(node.id) ?? [node.id]));
     },
-    [readOnly, connectedNodeIdsByNodeId, setSelectedNodeId, setHighlightedNodeIds, setFocusedFilePath, setInspectorOpen],
+    [readOnly, setSelectedNodeId, setFocusedFilePath, setInspectorOpen],
   );
 
   const onPaneClick = useCallback(() => {
@@ -415,6 +479,30 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
               position="top-right"
               className="mr-3 mt-3 flex flex-col gap-2.5 rounded-xl border border-white/5 bg-zinc-950/80 p-3.5 text-xs text-zinc-300 shadow-2xl backdrop-blur-md max-w-[220px]"
             >
+              {/* Analysis Tools */}
+              <div className="space-y-1 pb-1.5 border-b border-white/5">
+                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block mb-0.5 select-none font-bold">Analysis Tool</span>
+                <button
+                  type="button"
+                  onClick={() => setBlastRadiusActive(!blastRadiusActive)}
+                  title="Highlight change propagation impact"
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md border px-1.5 py-1 text-left transition-all hover:bg-white/5 active:scale-[0.98]",
+                    blastRadiusActive ? "bg-red-500/10 border-red-500/20 text-red-400" : "border-transparent opacity-80"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded border shrink-0 transition-colors",
+                    blastRadiusActive ? "bg-red-500/20 border-red-500/30 text-red-400 animate-pulse" : "bg-zinc-800/50 border-zinc-700/50 text-zinc-400"
+                  )}>
+                    <Zap className="h-3 w-3" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-semibold">Blast Radius</span>
+                    <span className="text-[9px] text-zinc-500 font-mono">Trace change impact</span>
+                  </div>
+                </button>
+              </div>
               <div className="flex items-center gap-1.5 border-b border-white/5 pb-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
                 Canvas Legend
@@ -513,6 +601,60 @@ export function GraphCanvas({ graph, readOnly }: GraphCanvasProps) {
           </>
         )}
       </ReactFlow>
+
+      {/* Blast Radius Impact HUD */}
+      {blastRadiusActive && selectedNodeId && (
+        <div className={cn(
+          "absolute bottom-4 z-10 w-80 rounded-xl border border-red-500/20 bg-zinc-950/90 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300",
+          compareBranch ? "left-[392px]" : "left-[60px]"
+        )}>
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-2.5">
+            <div className="flex items-center gap-1.5 text-red-400 font-semibold text-xs">
+              <Zap className="h-3.5 w-3.5 animate-pulse" />
+              <span>Blast Radius Analysis</span>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-mono">
+              {highlightedNodeIds.size - 1} affected
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <div>
+              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block">Epicenter</span>
+              <span className="text-[11px] font-mono text-zinc-200 truncate block">
+                {epicenterLabel}
+              </span>
+            </div>
+            {highlightedNodeIds.size > 1 && (
+              <div className="pt-2 border-t border-white/5">
+                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block mb-1">Propagation Path</span>
+                <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                  {Array.from(highlightedNodeIds)
+                    .filter(id => id !== selectedNodeId)
+                    .map(id => {
+                      const node = layouted.nodes.find(n => n.id === id);
+                      if (!node) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            const x = node.position.x + (node.measured?.width ?? node.width ?? 120) / 2;
+                            const y = node.position.y + (node.measured?.height ?? node.height ?? 36) / 2;
+                            setCenter(x, y, { zoom: 1.3, duration: 600 });
+                            setSelectedNodeId(id);
+                          }}
+                          className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-[10px] text-zinc-300 hover:bg-white/5 transition-colors font-mono"
+                        >
+                          <span className="truncate">{(node as Node<{ path?: string; label?: string }>).data?.path || (node as Node<{ path?: string; label?: string }>).data?.label || ''}</span>
+                          <span className="text-[9px] text-amber-400 opacity-80 shrink-0 ml-2">affected</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -521,19 +663,21 @@ function getNodeClassName(
   node: GraphNode | Node,
   selectedId: string | null,
   highlighted: Set<string>,
+  blastRadiusActive: boolean,
 ): string {
   if (!selectedId) return '';
-  if (node.id === selectedId) return 'selected';
-  if (highlighted.has(node.id)) return '';
+  if (node.id === selectedId) return blastRadiusActive ? 'selected epicenter-pulse' : 'selected';
+  if (highlighted.has(node.id)) return blastRadiusActive ? 'affected-highlight' : '';
   return 'dimmed';
 }
 
 function getEdgeStyle(
-  edge: { source: string; target: string },
+  edge: { source: string; target: string; type?: string },
   selectedId: string | null,
   highlighted: Set<string>,
   nodes: Map<string, Node>,
   theme: 'dark' | 'light',
+  blastRadiusActive: boolean,
 ): React.CSSProperties {
   const targetNode = nodes.get(edge.target);
   const sourceNode = nodes.get(edge.source);
@@ -547,6 +691,24 @@ function getEdgeStyle(
       stroke: theme === 'dark' ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.25)',
       strokeWidth: 1.2,
       strokeDasharray: '3,3',
+    };
+  }
+
+  if (blastRadiusActive) {
+    if (edge.type === 'imports' && highlighted.has(edge.source) && highlighted.has(edge.target)) {
+      const isEpicenterConnection = edge.target === selectedId;
+      return {
+        stroke: isEpicenterConnection ? '#ef4444' : '#f59e0b',
+        strokeWidth: 2,
+        opacity: 1,
+        transition: 'stroke 0.2s, stroke-width 0.2s',
+      };
+    }
+    return {
+      stroke: theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+      strokeWidth: 1,
+      opacity: 0.08,
+      transition: 'stroke 0.2s, stroke-width 0.2s',
     };
   }
 

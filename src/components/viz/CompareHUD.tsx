@@ -29,7 +29,7 @@ export function CompareHUD({ diff, defaultBranch }: CompareHUDProps) {
   const deletedArray = Array.from(diff.deleted);
 
   return (
-    <div className="absolute left-4 bottom-32 z-20 w-80 font-sans">
+    <div className="absolute left-[60px] bottom-4 z-20 w-80 font-sans">
       <div className="rounded-xl border border-zinc-800/40 bg-zinc-950/95 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-zinc-800/20 bg-zinc-900/40 select-none">

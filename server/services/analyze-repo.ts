@@ -42,9 +42,17 @@ export async function analyzeRepository(
 
   const tree = annotateTree(buildTreeFromPaths(items));
   const manifestPaths = findManifestPaths(items);
-  const fileContents = await fetchFileContents(owner, repo, manifestPaths, info.sha);
-  const dependencies = analyzeDependencies(fileContents);
   const importantFiles = findImportantFiles(items.map((i) => i.path));
+  
+  // Extract up to 20 important code files to parse internal imports
+  const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.go'];
+  const importantSourceFiles = importantFiles.filter((path) =>
+    sourceExtensions.some((ext) => path.endsWith(ext))
+  );
+
+  const pathsToFetch = Array.from(new Set([...manifestPaths, ...importantSourceFiles]));
+  const fileContents = await fetchFileContents(owner, repo, pathsToFetch, info.sha);
+  const dependencies = analyzeDependencies(fileContents);
 
   const graph = buildGraph({
     owner,
@@ -52,6 +60,7 @@ export async function analyzeRepository(
     tree,
     dependencies,
     contributors,
+    fileContents,
   });
 
   const analysis: RepoAnalysis = {

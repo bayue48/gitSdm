@@ -651,3 +651,27 @@ svg {
 .light .hljs-punctuation {
   color: #24292e;
 }
+
+/* Blast Radius Custom Styles */
+.graph-canvas-host .react-flow__node.epicenter-pulse > div {
+  border-color: #ef4444 !important; /* crimson red */
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.55) !important;
+  animation: epicenter-ripple 2s infinite ease-in-out;
+}
+
+.graph-canvas-host .react-flow__node.affected-highlight > div {
+  border-color: #f59e0b !important; /* amber */
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35) !important;
+}
+
+@keyframes epicenter-ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}

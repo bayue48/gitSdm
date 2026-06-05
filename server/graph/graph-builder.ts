@@ -8,6 +8,7 @@ import type {
 } from '../../src/types';
 import { applyDagreLayout } from './layout';
 import { getNodeCircleColor, getNodeCircleSize } from './node-colors';
+import { buildImportEdges } from '../parser/import-resolver';
 
 const MAX_FOLDER_NODES = 60;
 const MAX_FILE_NODES = 200;
@@ -18,6 +19,7 @@ export interface GraphBuildInput {
   tree: TreeNode[];
   dependencies: Dependency[];
   contributors: Contributor[];
+  fileContents?: Record<string, string>;
 }
 
 function countDescendants(node: TreeNode): number {
@@ -107,6 +109,15 @@ export function buildGraph(input: GraphBuildInput): GraphData {
   }
 
   walkTree(input.tree, repoId, 0);
+
+  // Extract all file paths from registered file nodes
+  const fileNodes = nodes.filter((n) => n.type === 'file');
+  const allFilePaths = fileNodes.map((n) => n.id.replace(/^file:/, ''));
+  
+  if (input.fileContents) {
+    const importEdges = buildImportEdges(input.fileContents, allFilePaths);
+    edges.push(...importEdges);
+  }
 
   const laidOut = applyDagreLayout(nodes, edges);
   return { nodes: laidOut, edges, layout: 'dagre' };

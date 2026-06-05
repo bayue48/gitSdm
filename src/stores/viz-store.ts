@@ -32,6 +32,7 @@ interface VizState {
   executionFlowPaths: string[];
   activeFocusLayer: 'all' | 'api' | 'ui' | 'core' | 'config';
   diffStatusFilters: Set<'added' | 'modified' | 'deleted'>;
+  blastRadiusActive: boolean;
 
   toggleDiffStatusFilter: (status: 'added' | 'modified' | 'deleted') => void;
   setSelectedBranch: (branch: string | null) => void;
@@ -60,6 +61,7 @@ interface VizState {
   setExecutionFlowPaths: (paths: string[]) => void;
   setActiveFocusLayer: (layer: 'all' | 'api' | 'ui' | 'core' | 'config') => void;
   setActiveView: (view: 'graph' | 'architecture' | 'contributors' | 'commits') => void;
+  setBlastRadiusActive: (active: boolean) => void;
 
   reset: () => void;
 }
@@ -93,6 +95,7 @@ export const useVizStore = create<VizState>((set) => ({
   executionFlowPaths: [],
   activeFocusLayer: 'all',
   diffStatusFilters: new Set(),
+  blastRadiusActive: false,
 
   toggleDiffStatusFilter: (status) =>
     set((s) => {
@@ -145,6 +148,7 @@ export const useVizStore = create<VizState>((set) => ({
   setExecutionFlowPaths: (executionFlowPaths) => set({ executionFlowPaths }),
   setActiveFocusLayer: (activeFocusLayer) => set({ activeFocusLayer }),
   setActiveView: (activeView) => set({ activeView }),
+  setBlastRadiusActive: (blastRadiusActive) => set({ blastRadiusActive }),
 
   reset: () =>
     set({
@@ -171,6 +175,7 @@ export const useVizStore = create<VizState>((set) => ({
       activeFocusLayer: 'all',
       diffStatusFilters: new Set(),
       activeView: 'graph',
+      blastRadiusActive: false,
     }),
 }));
 
