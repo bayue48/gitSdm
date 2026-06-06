@@ -23,6 +23,21 @@ import { logApi, logError } from './utils/logger';
 import { clearAllCaches } from './cache/lru';
 import { getPublicAppConfig } from './config/app-config';
 import { toErrorPayload, AppError } from './utils/errors';
+import type {
+  RepoAnalysis,
+  TrendingRepo,
+  AIExplainResponse,
+  AIArchitectureResponse,
+  AISuggestFilesResponse,
+  AIOnboardingResponse,
+  AILearningPathResponse,
+  AIExplainNewResponse,
+  AIRefactorResponse,
+  AIHealthResponse,
+  AIMermaidResponse,
+  AIRoastResponse,
+  AIReadmeEnhanceResponse,
+} from '../src/types';
 
 const analyzeBodySchema = z.object({
   url: z.string().optional(),
@@ -77,7 +92,7 @@ export async function handleApiRequest(
 
   try {
     if (pathname === '/api/trending' && method === 'GET') {
-      const repos = await fetchTrending();
+      const repos: TrendingRepo[] = await fetchTrending();
       logApi('/api/trending', { durationMs: Date.now() - start, count: repos.length });
       return Response.json({ repos }, { status: 200 });
     }
@@ -102,7 +117,7 @@ export async function handleApiRequest(
       if (!repo) {
         throw new AppError(400, 'Invalid GitHub repository URL', 'INVALID_PARAMS');
       }
-      const analysis = await analyzeRepository({ ...repo, branch: parsed.data.branch }, ctx);
+      const analysis: RepoAnalysis = await analyzeRepository({ ...repo, branch: parsed.data.branch }, ctx);
       logApi('/api/repo/analyze', {
         durationMs: Date.now() - start,
         repo: `${repo.owner}/${repo.repo}`,
@@ -116,7 +131,7 @@ export async function handleApiRequest(
       if (!q.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const branches = await fetchRepoBranches(q.data.owner, q.data.repo, ctx);
+      const branches: { name: string; protected: boolean }[] = await fetchRepoBranches(q.data.owner, q.data.repo, ctx);
       return Response.json(branches, { status: 200 });
     }
 
@@ -125,7 +140,7 @@ export async function handleApiRequest(
       if (!q.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const analysis = await analyzeRepository(q.data, ctx);
+      const analysis: RepoAnalysis = await analyzeRepository(q.data, ctx);
       return Response.json({ graph: analysis.graph, meta: analysis.meta }, { status: 200 });
     }
 
@@ -134,7 +149,7 @@ export async function handleApiRequest(
       if (!q.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const analysis = await analyzeRepository(q.data, ctx);
+      const analysis: RepoAnalysis = await analyzeRepository(q.data, ctx);
       return Response.json({
         tree: analysis.tree,
         truncated: analysis.treeTruncated,
@@ -147,7 +162,7 @@ export async function handleApiRequest(
       if (!q.success) {
         throw new AppError(400, 'owner, repo, and path required', 'INVALID_PARAMS');
       }
-      const file = await getRepoFileContent(q.data.owner, q.data.repo, q.data.path, q.data.branch, ctx);
+      const file: { content: string } = await getRepoFileContent(q.data.owner, q.data.repo, q.data.path, q.data.branch, ctx);
       return Response.json(file, { status: 200 });
     }
 
@@ -156,7 +171,7 @@ export async function handleApiRequest(
       if (!q.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const analysis = await analyzeRepository(q.data, ctx);
+      const analysis: RepoAnalysis = await analyzeRepository(q.data, ctx);
       return Response.json({ contributors: analysis.contributors }, { status: 200 });
     }
 
@@ -166,7 +181,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'Invalid request', 'VALIDATION_ERROR', false, parsed.error.flatten());
       }
-      const result = await explainRepo({ ...parsed.data, apiKey: userKey, gitHubToken }, ctx);
+      const result: AIExplainResponse = await explainRepo({ ...parsed.data, apiKey: userKey, gitHubToken }, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -176,7 +191,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await explainArchitecture(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIArchitectureResponse = await explainArchitecture(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -186,7 +201,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await suggestFiles(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AISuggestFilesResponse = await suggestFiles(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -196,7 +211,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateOnboarding(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIOnboardingResponse = await generateOnboarding(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -206,7 +221,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateLearningPath(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AILearningPathResponse = await generateLearningPath(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -216,7 +231,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await explainRepoELI5(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIExplainNewResponse = await explainRepoELI5(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -226,7 +241,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateRefactorSuggestions(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIRefactorResponse = await generateRefactorSuggestions(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -236,7 +251,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateHealthReport(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIHealthResponse = await generateHealthReport(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -246,7 +261,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateMermaidDiagram(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIMermaidResponse = await generateMermaidDiagram(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -256,7 +271,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateRepoRoast(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIRoastResponse = await generateRepoRoast(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
@@ -266,7 +281,7 @@ export async function handleApiRequest(
       if (!parsed.success) {
         throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
-      const result = await generateReadmeEnhancement(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
+      const result: AIReadmeEnhanceResponse = await generateReadmeEnhancement(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
     }
 
