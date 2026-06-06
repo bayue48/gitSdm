@@ -205,7 +205,7 @@ export function VizPage() {
   }, [data, compareBranch, compareData, graphDiff]);
 
   if (error) {
-    return <VizError message={error instanceof Error ? error.message : 'Unknown error'} />;
+    return <VizError error={error as any} />;
   }
 
   return (

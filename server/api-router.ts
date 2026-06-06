@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getOctokit, GitHubRateLimitError } from './github/client';
+import { getOctokit } from './github/client';
 import { parseRepoParams } from './github/parse-url';
 import type { RequestContext } from './utils/context';
 import {
@@ -19,9 +19,10 @@ import { analyzeRepository } from './services/analyze-repo';
 import { getRepoFileContent } from './services/get-file';
 import { fetchTrending } from './services/trending';
 import { fetchRepoBranches } from './github/fetch-tree';
-import { logApi } from './utils/logger';
+import { logApi, logError } from './utils/logger';
 import { clearAllCaches } from './cache/lru';
 import { getPublicAppConfig } from './config/app-config';
+import { toErrorPayload, AppError } from './utils/errors';
 
 const analyzeBodySchema = z.object({
   url: z.string().optional(),
@@ -52,9 +53,6 @@ const fileQuerySchema = repoQuerySchema.extend({
   path: z.string().min(1).max(500),
 });
 
-function sendError(status: number, message: string, details?: unknown): Response {
-  return Response.json({ error: message, details }, { status });
-}
 
 export async function handleApiRequest(
   req: Request,
@@ -98,11 +96,11 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = analyzeBodySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'Invalid request body', parsed.error.flatten());
+        throw new AppError(400, 'Invalid request body', 'VALIDATION_ERROR', false, parsed.error.flatten());
       }
       const repo = parseRepoParams(parsed.data.owner, parsed.data.repo, parsed.data.url);
       if (!repo) {
-        return sendError(400, 'Invalid GitHub repository URL');
+        throw new AppError(400, 'Invalid GitHub repository URL', 'INVALID_PARAMS');
       }
       const analysis = await analyzeRepository({ ...repo, branch: parsed.data.branch }, ctx);
       logApi('/api/repo/analyze', {
@@ -116,7 +114,7 @@ export async function handleApiRequest(
     if (pathname === '/api/repo/branches' && method === 'GET') {
       const q = repoQuerySchema.safeParse(query);
       if (!q.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const branches = await fetchRepoBranches(q.data.owner, q.data.repo, ctx);
       return Response.json(branches, { status: 200 });
@@ -125,7 +123,7 @@ export async function handleApiRequest(
     if (pathname === '/api/repo/graph' && method === 'GET') {
       const q = repoQuerySchema.safeParse(query);
       if (!q.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const analysis = await analyzeRepository(q.data, ctx);
       return Response.json({ graph: analysis.graph, meta: analysis.meta }, { status: 200 });
@@ -134,7 +132,7 @@ export async function handleApiRequest(
     if (pathname === '/api/repo/tree' && method === 'GET') {
       const q = repoQuerySchema.safeParse(query);
       if (!q.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const analysis = await analyzeRepository(q.data, ctx);
       return Response.json({
@@ -147,7 +145,7 @@ export async function handleApiRequest(
     if (pathname === '/api/repo/file' && method === 'GET') {
       const q = fileQuerySchema.safeParse(query);
       if (!q.success) {
-        return sendError(400, 'owner, repo, and path required');
+        throw new AppError(400, 'owner, repo, and path required', 'INVALID_PARAMS');
       }
       const file = await getRepoFileContent(q.data.owner, q.data.repo, q.data.path, q.data.branch, ctx);
       return Response.json(file, { status: 200 });
@@ -156,7 +154,7 @@ export async function handleApiRequest(
     if (pathname === '/api/repo/contributors' && method === 'GET') {
       const q = repoQuerySchema.safeParse(query);
       if (!q.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const analysis = await analyzeRepository(q.data, ctx);
       return Response.json({ contributors: analysis.contributors }, { status: 200 });
@@ -166,7 +164,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = aiExplainSchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'Invalid request', parsed.error.flatten());
+        throw new AppError(400, 'Invalid request', 'VALIDATION_ERROR', false, parsed.error.flatten());
       }
       const result = await explainRepo({ ...parsed.data, apiKey: userKey, gitHubToken }, ctx);
       return Response.json(result, { status: 200 });
@@ -176,7 +174,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await explainArchitecture(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -186,7 +184,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await suggestFiles(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -196,7 +194,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateOnboarding(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -206,7 +204,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateLearningPath(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -216,7 +214,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await explainRepoELI5(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -226,7 +224,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateRefactorSuggestions(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -236,7 +234,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateHealthReport(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -246,7 +244,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateMermaidDiagram(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -256,7 +254,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateRepoRoast(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -266,7 +264,7 @@ export async function handleApiRequest(
       const body = await req.json().catch(() => ({}));
       const parsed = repoQuerySchema.safeParse(body);
       if (!parsed.success) {
-        return sendError(400, 'owner and repo required');
+        throw new AppError(400, 'owner and repo required', 'INVALID_PARAMS');
       }
       const result = await generateReadmeEnhancement(parsed.data.owner, parsed.data.repo, parsed.data.branch, userKey, gitHubToken, ctx);
       return Response.json(result, { status: 200 });
@@ -274,18 +272,8 @@ export async function handleApiRequest(
 
     return null;
   } catch (error) {
-    if (error instanceof GitHubRateLimitError) {
-      return Response.json(
-        { error: error.message },
-        {
-          status: 429,
-          headers: { 'Retry-After': String(error.retryAfter ?? 60) },
-        },
-      );
-    }
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    logApi(pathname, { durationMs: Date.now() - start, error: message });
-    const status = message.toLowerCase().includes('not found') ? 404 : 500;
-    return sendError(status, message);
+    const payload = toErrorPayload(error);
+    logError(pathname, error, { durationMs: Date.now() - start });
+    return Response.json(payload, { status: payload.status });
   }
 }
